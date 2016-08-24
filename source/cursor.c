@@ -2,7 +2,6 @@
 
 #include "common.h"
 #include "view.h"
-#include "model.h"
 
 void validatecurs()
 {

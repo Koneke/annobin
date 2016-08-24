@@ -8,7 +8,6 @@
 #include <curses.h>
 
 #include "file.h"
-#include "comment.h"
 #include "model.h"
 
 void file_setup(char* filepath, char* annotpath)

@@ -1,7 +1,6 @@
 #include <stdint.h>
 
 #include "view.h"
-#include "model.h"
 
 void view_setup()
 {

@@ -3,11 +3,9 @@
 #include <stdint.h>
 
 #include "draw.h"
-#include "comment.h"
 #include "file.h"
 #include "input.h"
 #include "view.h"
-#include "model.h"
 #include "app.h"
 
 void app_setup(int argc, char** argv)

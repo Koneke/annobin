@@ -1,3 +1,6 @@
+// everything with access to view also has access to model by definition
+#include "model.h"
+
 int view_width, view_height;
 
 int screenscroll;

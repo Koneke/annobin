@@ -5,26 +5,26 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "comment.h"
-#include "model.h"
 #include "cursor.h"
 #include "file.h"
 #include "view.h"
 #include "app.h"
+
+#define BUFFER_SIZE 100
 
 typedef void (*textinput_callback)(char*);
 
 static int inputstate;
 
 static textinput_callback textcallback;
-static char commentbuffer[100];
-static int buffersize = 100;
-static int commentindex;
+
+static char inputbuffer[100];
+static int inputindex;
 
 static void resetbuffer()
 {
-	memset(commentbuffer, 0, buffersize);
-	commentindex = 0;
+	memset(inputbuffer, 0, BUFFER_SIZE);
+	inputindex = 0;
 }
 
 static void finishcomment_cb(char* comment)
@@ -34,8 +34,8 @@ static void finishcomment_cb(char* comment)
 
 static char* input_clonebuffer()
 {
-	char* clone = malloc(commentindex);
-	strcpy(clone, commentbuffer);
+	char* clone = malloc(inputindex);
+	strcpy(clone, inputbuffer);
 	return clone;
 }
 
@@ -72,14 +72,15 @@ static int textinput(char c)
 		(c >= '0' && c <= '9') ||
 		(c == '.' || c == ',' || c == ' ')
 	) {
-		commentbuffer[commentindex++] = c;
-		commentindex = min(commentindex, 99);
+		inputbuffer[inputindex++] = c;
 	}
 
 	if (c == 127 || c == 8)
 	{
-		commentbuffer[--commentindex] = '\0';
+		inputbuffer[--inputindex] = '\0';
 	}
+
+	inputindex = clamp(inputindex, 0, BUFFER_SIZE - 1);
 
 	if (c == KEY_ENTER || c == '\n' || c == '\r')
 	{
@@ -204,7 +205,7 @@ void input_draw()
 	if (inputstate == 2)
 	{
 		attron(COLOR_PAIR(3));
-		mvwprintw(stdscr, 0, 0, "comment: %s", commentbuffer);
+		mvwprintw(stdscr, 0, 0, "comment: %s", inputbuffer);
 		attroff(COLOR_PAIR(3));
 	}
 

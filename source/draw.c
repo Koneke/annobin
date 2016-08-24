@@ -3,8 +3,6 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "comment.h"
-#include "model.h"
 #include "view.h"
 
 static const int leftmarginwidth = 6;
@@ -102,9 +100,13 @@ static void drawcomments()
 			if (comment = comment_at(offset))
 			{
 				if (comment == comment_highlighted)
+				{
 					attron(COLOR_PAIR(6 + (comment->index % 2)));
+				}
 				else
+				{
 					attron(COLOR_PAIR(1 + (comment->index % 2)));
+				}
 
 				if (comment->index > commentswritten)
 				{
