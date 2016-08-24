@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#define _BSD_SOURCE
+#define __USE_BSD
+#include <endian.h>
+#include <unistd.h>
 
 #include <ncurses.h>
 
@@ -11,8 +15,8 @@ FILE* annot;
 typedef struct comment_s {
 	int index;
 	char* comment;
-	int position;
-	int length;
+	uint64_t position;
+	uint64_t length;
 	struct comment_s* prev;
 	struct comment_s* next;
 } comment_t;
@@ -36,6 +40,8 @@ char commentbuffer[100];
 int min(int a, int b) { return a < b ? a : b; }
 
 int max(int a, int b) { return a > b ? a : b; }
+
+void draw();
 
 int offsetfromxy(int x, int y)
 {
@@ -89,22 +95,60 @@ comment_t* addcomment(int position, int length, char* comment)
 	comment_t* new = malloc(sizeof(comment_t));
 
 	comment_t* current = head;
+	comment_t* ahead = NULL;
+	// we leave this when we hit END or
+	// find a comment AFTER the position we're inserting at
 	while (current && current->position < position)
 	{
+		ahead = current;
 		current = current->next;
 	}
 
-	if (current) bumpcomments(current);
+	if (current) ahead = current;
 
-	new->index = tail ? tail->index + 1 : 0;
+	// no current, and an ahead behind us means we're tail now
+	if (ahead && ahead->position < position)
+	{
+		ahead = NULL;
+	}
+
+	// ahead should now be the first comment that should be
+	// after ours, OR NULL if there was none.
+	if (ahead)
+	{
+		new->index = ahead->index;
+		bumpcomments(ahead);
+
+		if (ahead->prev)
+		{
+			new->prev = ahead->prev;
+			ahead->prev->next = new;
+		}
+
+		ahead->prev = new;
+		new->next = ahead;
+	}
+	else
+	{
+		if (tail)
+		{
+			tail->next = new;
+			new->prev = tail;
+			new->index = tail->index + 1;
+			tail = new;
+		}
+		else
+		{
+			new->index = 0;
+			tail = new;
+		}
+	}
+
 	new->comment = comment;
 	new->position = position;
 	new->length = length;
-	new->prev = tail;
 
 	if (!head) head = new;
-	if (tail) tail->next = new;
-	tail = new;
 
 	return new;
 }
@@ -113,18 +157,18 @@ void finishcomment()
 {
 	char* comment = malloc(commentindex);
 	strcpy(comment, commentbuffer);
-	addcomment(
-		commentstart,
-		offsetfromxy(cursx, cursy) - commentstart,
-		comment);
+
+	int comstart = min(commentstart, offsetfromxy(cursx, cursy));
+	int comend = max(commentstart, offsetfromxy(cursx, cursy));
+	addcomment(comstart, comend - comstart, comment);
 }
 
 void deletecomment(comment_t* comment)
 {
+	shrumpcomments(comment); // bump indexes down one
 	if (comment->prev) comment->prev->next = comment->next;
 	if (comment->next)
 	{
-		shrumpcomments(comment->next); // bump indexes down one
 		comment->next->prev = comment->prev;
 	}
 	if (comment == head) head = comment->next;
@@ -176,7 +220,7 @@ char getprintchar(char c)
 		return c;
 	}
 
-	return ' ';
+	return '_';
 
 	switch(c)
 	{
@@ -191,8 +235,9 @@ char getprintchar(char c)
 void draw()
 {
 	int offset;
-	int lastcomment = 0; // line (so we don't overlap comments)
+	int commentlast = -1; // line (so we don't overlap comments)
 	int commentswritten = -1;
+	clear();
 	for (int y = 0; y < h; y++)
 	{
 		offset = bytescroll + y * bytesperline;
@@ -210,10 +255,24 @@ void draw()
 			if (comment = commentat(offset))
 			{
 				attron(COLOR_PAIR(1 + (comment->index % 2)));
-				mvwprintw(stdscr, y, 41 + 3 * bytesperline, comment->comment);
+
+				if (comment->index > commentswritten)
+				{
+					int commenty = y;
+					while (commenty <= commentlast)
+					{
+						commenty++;
+					}
+					mvwprintw(stdscr, commenty, 28 + 3 * bytesperline, comment->comment);
+					commentswritten++;
+					commentlast = commenty;
+				}
 			}
 
-			if (state > 0 && offset >= commentstart && offset < offsetfromxy(cursx, cursy))
+			int comstart = min(commentstart, offsetfromxy(cursx, cursy));
+			int comend = max(commentstart, offsetfromxy(cursx, cursy));
+
+			if (state > 0 && offset >= comstart && offset < comend)
 			{
 				attron(COLOR_PAIR(4));
 			}
@@ -225,8 +284,8 @@ void draw()
 
 			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", buffer[offset]);
 
-			move(y, 9 + 3 * bytesperline + 2 * i);
-			printw("%c ", getprintchar(buffer[offset]));
+			move(y, 10 + 3 * bytesperline + i);
+			printw("%c", getprintchar(buffer[offset]));
 
 			attroff(COLOR_PAIR(1));
 			attroff(COLOR_PAIR(2));
@@ -266,6 +325,74 @@ int commentinput(char c)
 	}
 }
 
+void readannotfile(char* path)
+{
+	annot = fopen(path, "r");
+	fseek(annot, 0, SEEK_SET);
+
+	uint64_t position, length;
+	uint16_t comlength;
+	char tempbuffer[128];
+
+	while (!feof(annot))
+	{
+		if (fread(&position, sizeof(uint64_t), 1, annot) != 1) break;
+		if (fread(&length, sizeof(uint64_t), 1, annot) != 1) break;
+		if (fread(&comlength, sizeof(uint16_t), 1, annot) != 1) break;
+
+		int cl = be16toh(comlength);
+		char* comment = malloc(cl + 1);
+		memset(comment, 0, cl + 1);
+		for (int i = 0; i < cl + 1; i++)
+			comment[i] = fgetc(annot);
+
+		addcomment(be64toh(position), be64toh(length), comment);
+	}
+
+	fclose(annot);
+}
+
+void writeannotfile(char* path)
+{
+	annot = fopen(path, "w+");
+
+	comment_t* current = head;
+	int count = 1;
+	while (current)
+	{
+		uint64_t position, length;
+		position = htobe64(current->position);
+		length = htobe64(current->length);
+
+		fwrite(&position, sizeof(uint64_t), 1, annot);
+		fwrite(&length, sizeof(uint64_t), 1, annot);
+
+		uint16_t comlength;
+		comlength = htobe16(strlen(current->comment));
+
+		fwrite(&comlength, sizeof(uint16_t), 1, annot);
+
+		char* c = current->comment;
+		while (*c) {
+			fputc(*c, annot);
+			c++;
+		}
+		fputc('\0', annot);
+
+		current = current->next;
+	}
+
+	fclose(annot);
+
+	wbkgd(stdscr, COLOR_PAIR(2));
+	attron(COLOR_PAIR(5));
+	mvwprintw(stdscr, 0, 0, "wrote to %s", path);
+	attroff(COLOR_PAIR(5));
+	getch();
+	wbkgd(stdscr, COLOR_PAIR(0));
+	draw();
+}
+
 int main(int argc, char** argv)
 {
 	initscr();
@@ -273,11 +400,16 @@ int main(int argc, char** argv)
 	init_pair(1, COLOR_BLACK, COLOR_BLUE);
 	init_pair(2, COLOR_BLACK, COLOR_GREEN);
 	init_pair(3, COLOR_WHITE, COLOR_RED); // cursor
-	init_pair(4, COLOR_RED, COLOR_WHITE); // commenting
+	init_pair(4, COLOR_RED, COLOR_WHITE); // commenting area
+	init_pair(5, COLOR_WHITE, COLOR_RED); // important
 	noecho();
 
-	file = fopen("in.file", "r");
-	annot = fopen("annot.file", "r+");
+	file = fopen("in.testfile", "r");
+	readannotfile("annot.testfile");
+
+	/*char* com = malloc(4);
+	com = strcpy(com, "foo");
+	addcomment(0, 10, com);*/
 
 	getmaxyx(stdscr, h, w);
 
@@ -287,15 +419,6 @@ int main(int argc, char** argv)
 	int size = 20000;
 	buffer = malloc(size);
 	fread(buffer, 1, size, file);
-
-	char* com = malloc(4);
-	com = strcpy(com, "foo");
-	addcomment(0, 10, com);
-	com = malloc(4);
-	com = strcpy(com, "bar");
-	addcomment(20, 3, com);
-
-	printw("h %i", h/2);
 
 	int run = 1;
 	state = 0; // 0 browse, 1 insert, 2 write
@@ -349,6 +472,13 @@ int main(int argc, char** argv)
 
 					if (!overlapping)
 						state = 2;
+				}
+				break;
+
+			case 'w': case 'W':
+				if (getch() == 'Y')
+				{
+					writeannotfile("annot.testfile");
 				}
 				break;
 
