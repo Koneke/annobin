@@ -124,6 +124,10 @@ comment_t* addcomment(int position, int length, char* comment)
 			new->prev = ahead->prev;
 			ahead->prev->next = new;
 		}
+		else // we're head now
+		{
+			head = new;
+		}
 
 		ahead->prev = new;
 		new->next = ahead;
@@ -161,6 +165,8 @@ void finishcomment()
 	int comstart = min(commentstart, offsetfromxy(cursx, cursy));
 	int comend = max(commentstart, offsetfromxy(cursx, cursy));
 	addcomment(comstart, comend - comstart, comment);
+
+	strcpy(commentbuffer, "");
 }
 
 void deletecomment(comment_t* comment)
@@ -232,6 +238,38 @@ char getprintchar(char c)
 	return c;
 }
 
+void drawcomments()
+{
+	int offset;
+	int commentlast = -1; // line (so we don't overlap comments)
+	int commentswritten = -1;
+	for (int y = 0; y < h; y++)
+	{
+		for (int x = 0; x < bytesperline; x++)
+		{
+			offset = bytescroll + y * bytesperline + x;
+
+			comment_t* comment;
+			if (comment = commentat(offset))
+			{
+				if (comment == commentat(offsetfromxy(cursx, cursy)))
+					attron(COLOR_PAIR(6 + (comment->index % 2)));
+				else
+					attron(COLOR_PAIR(1 + (comment->index % 2)));
+
+				if (comment->index > commentswritten)
+				{
+					int commenty = max(commentlast, y);
+
+					mvwprintw(stdscr, commenty, 28 + 3 * bytesperline, "%s", comment->comment);
+					commentswritten++;
+					commentlast = commenty + 1;
+				}
+			}
+		}
+	}
+}
+
 void draw()
 {
 	int offset;
@@ -255,18 +293,6 @@ void draw()
 			if (comment = commentat(offset))
 			{
 				attron(COLOR_PAIR(1 + (comment->index % 2)));
-
-				if (comment->index > commentswritten)
-				{
-					int commenty = y;
-					while (commenty <= commentlast)
-					{
-						commenty++;
-					}
-					mvwprintw(stdscr, commenty, 28 + 3 * bytesperline, comment->comment);
-					commentswritten++;
-					commentlast = commenty;
-				}
 			}
 
 			int comstart = min(commentstart, offsetfromxy(cursx, cursy));
@@ -293,6 +319,8 @@ void draw()
 		move(y, 0);
 	}
 
+	drawcomments();
+
 	refresh();
 }
 
@@ -308,19 +336,21 @@ int commentinput(char c)
 		commentindex = min(commentindex, 99);
 	}
 
-	if (c == KEY_BACKSPACE)
+	if (c == 127 || c == 8)
 	{
-		commentbuffer[commentindex--] = '\0';
+		commentbuffer[--commentindex] = '\0';
 	}
 
 	if (c == KEY_ENTER || c == '\n' || c == '\r')
 	{
 		finishcomment();
+		commentindex = 0;
 		return state = 0;
 	}
 
 	if (c == 27)
 	{
+		commentindex = 0;
 		return state = 0;
 	}
 }
@@ -393,6 +423,13 @@ void writeannotfile(char* path)
 	draw();
 }
 
+void begincomment()
+{
+	state = 1;
+	memset(commentbuffer, 0, 100);
+	commentstart = cursy * bytesperline + cursx;
+}
+
 int main(int argc, char** argv)
 {
 	initscr();
@@ -402,14 +439,12 @@ int main(int argc, char** argv)
 	init_pair(3, COLOR_WHITE, COLOR_RED); // cursor
 	init_pair(4, COLOR_RED, COLOR_WHITE); // commenting area
 	init_pair(5, COLOR_WHITE, COLOR_RED); // important
+	init_pair(6, COLOR_WHITE, COLOR_BLUE);
+	init_pair(7, COLOR_WHITE, COLOR_GREEN);
 	noecho();
 
 	file = fopen("in.testfile", "r");
 	readannotfile("annot.testfile");
-
-	/*char* com = malloc(4);
-	com = strcpy(com, "foo");
-	addcomment(0, 10, com);*/
 
 	getmaxyx(stdscr, h, w);
 
@@ -459,9 +494,7 @@ int main(int argc, char** argv)
 				{
 					if (!commentat(offsetfromxy(cursx, cursy)))
 					{
-						state = 1;
-						strcpy(commentbuffer, "");
-						commentstart = cursy * bytesperline + cursx;
+						begincomment();
 					}
 				}
 				else if (state == 1)
@@ -471,7 +504,9 @@ int main(int argc, char** argv)
 						overlapping += commentat(i) ? 1 : 0;
 
 					if (!overlapping)
+					{
 						state = 2;
+					}
 				}
 				break;
 
