@@ -1,4 +1,4 @@
-fix comment rendering
 file scrolling (fseek when we get too close to end of loaded stuff)
 goto command
 find command? (both in hex and comments) (... regexes? :S)
+goto next/prev comment

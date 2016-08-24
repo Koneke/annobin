@@ -1,0 +1,2 @@
+void drawcomments();
+void draw();
