@@ -4,11 +4,9 @@
 #define _BSD_SOURCE
 #define __USE_BSD
 #include <endian.h>
-#include <unistd.h>
 
 #include <curses.h>
 
-#include "global.h"
 #include "file.h"
 #include "comment.h"
 

@@ -1,21 +1,14 @@
-#include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#define _BSD_SOURCE
-#define __USE_BSD
-#include <endian.h>
-#include <unistd.h>
 
 #include <ncurses.h>
 
-#include "draw.h"
 #include "global.h"
-#include "comment.h"
 #include "common.h"
+#include "draw.h"
+#include "comment.h"
 #include "file.h"
 #include "input.h"
-#include "cursor.h"
 
 int main(int argc, char** argv)
 {

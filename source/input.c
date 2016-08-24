@@ -2,7 +2,6 @@
 
 #include <ncurses.h>
 
-#include "draw.h"
 #include "global.h"
 #include "common.h"
 #include "comment.h"
