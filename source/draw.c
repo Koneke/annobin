@@ -3,8 +3,8 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "global.h"
 #include "comment.h"
+#include "model.h"
 #include "view.h"
 
 static const int leftmarginwidth = 6;
@@ -22,7 +22,7 @@ void draw_setup()
 	init_pair(6, COLOR_WHITE, COLOR_BLUE);
 	init_pair(7, COLOR_WHITE, COLOR_GREEN);
 	noecho();
-	getmaxyx(stdscr, h, w);
+	getmaxyx(stdscr, view_height, view_width);
 }
 
 void draw_quit()
@@ -30,12 +30,38 @@ void draw_quit()
 	endwin();
 }
 
+static void setcolor(int offset)
+{
+	comment_t* comment;
+	if (comment = comment_at(offset))
+	{
+		if (comment == comment_highlighted)
+		{
+			attron(COLOR_PAIR(6 + (comment->index % 2)));
+		}
+		else
+		{
+			attron(COLOR_PAIR(1 + (comment->index % 2)));
+		}
+	}
+
+	if (model_selectionstart != -1 && offset >= model_selectionstart && offset <= model_selectionend)
+	{
+		attron(COLOR_PAIR(4));
+	}
+
+	if (offset == model_cursoroffset)
+	{
+		attron(COLOR_PAIR(3));
+	}
+}
+
 static void drawdata()
 {
 	int offset;
 	int commentlast = -1; // line (so we don't overlap comments)
 	int commentswritten = -1;
-	for (int y = 0; y < h; y++)
+	for (int y = 0; y < view_height; y++)
 	{
 		offset = bytescroll + y * bytesperline;
 
@@ -48,27 +74,7 @@ static void drawdata()
 		{
 			offset = bytescroll + y * bytesperline + i;
 
-			comment_t* comment;
-			if (comment = comment_at(offset))
-			{
-				if (comment == comment_highlighted)
-					attron(COLOR_PAIR(6 + (comment->index % 2)));
-				else
-					attron(COLOR_PAIR(1 + (comment->index % 2)));
-			}
-
-			int comstart = min(commentstart, offsetfromxy(cursx, cursy));
-			int comend = max(commentstart, offsetfromxy(cursx, cursy));
-
-			if (state > 0 && offset >= comstart && offset <= comend)
-			{
-				attron(COLOR_PAIR(4));
-			}
-
-			if (i == cursx && y == (cursy - screenscroll))
-			{
-				attron(COLOR_PAIR(3));
-			}
+			setcolor(offset);
 
 			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", buffer[offset]);
 
@@ -85,7 +91,8 @@ static void drawcomments()
 	int offset;
 	int commentlast = -1; // line (so we don't overlap comments)
 	int commentswritten = -1;
-	for (int y = 0; y < h; y++)
+
+	for (int y = 0; y < view_height; y++)
 	{
 		for (int x = 0; x < bytesperline; x++)
 		{

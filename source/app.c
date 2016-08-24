@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "global.h"
-
 #include "draw.h"
 #include "comment.h"
 #include "file.h"
 #include "input.h"
 #include "view.h"
+#include "model.h"
+#include "app.h"
 
 void app_setup(int argc, char** argv)
 {
@@ -24,12 +24,13 @@ void app_setup(int argc, char** argv)
 
 void app_run()
 {
-	run = 1;
-	while (run)
+	app_running = 1;
+	while (app_running)
 	{
 		draw_draw();
 		input_draw();
 		input_update();
+		view_update();
 	}
 }
 

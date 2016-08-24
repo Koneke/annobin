@@ -4,14 +4,17 @@
 
 #include <ncurses.h>
 
-#include "global.h"
 #include "common.h"
 #include "comment.h"
+#include "model.h"
 #include "cursor.h"
 #include "file.h"
 #include "view.h"
+#include "app.h"
 
 typedef void (*textinput_callback)(char*);
+
+static int inputstate;
 
 static textinput_callback textcallback;
 static char commentbuffer[100];
@@ -26,9 +29,7 @@ static void resetbuffer()
 
 static void finishcomment_cb(char* comment)
 {
-	int comstart = min(commentstart, offsetfromxy(cursx, cursy));
-	int comend = max(commentstart, offsetfromxy(cursx, cursy));
-	comment_addcomment(comstart, comend - comstart, comment);
+	comment_addcomment(model_selectionstart, model_selectionlength, comment);
 }
 
 static char* input_clonebuffer()
@@ -38,9 +39,23 @@ static char* input_clonebuffer()
 	return clone;
 }
 
+static int setstate(int _state)
+{
+	switch (_state)
+	{
+		case 0:
+			model_selectionstart = -1;
+			model_selectionend = -1;
+			model_selectionlength = -1;
+	}
+
+	return inputstate = _state;
+}
+
+
 void input_setup()
 {
-	state = 0;
+	setstate(0);
 	resetbuffer();
 }
 
@@ -70,13 +85,13 @@ static int textinput(char c)
 	{
 		(textcallback)(input_clonebuffer());
 		resetbuffer();
-		return state = 0;
+		return setstate(0);
 	}
 
 	if (c == 27)
 	{
 		resetbuffer();
-		return state = 0;
+		return setstate(0);
 	}
 }
 
@@ -98,29 +113,27 @@ static void normalmodeinput(int ch)
 
 		case 'x': case 'X':
 		{
-			comment_t* comment = comment_at(cursy * bytesperline + cursx);
+			comment_t* comment = comment_at(model_cursoroffset);
 			if (comment)
 				comment_delete(comment);
 		}
 			break;
 
 		case 'c': case 'C':
-			if (state == 0)
+			if (inputstate == 0)
 			{
-				if (!comment_at(offsetfromxy(cursx, cursy)))
+				if (!comment_at(model_cursoroffset))
 				{
-					state = 1;
-					commentstart = offsetfromxy(cursx, cursy);
+					setstate(1);
+					model_selectionstart = model_cursoroffset;
 					input_starttextinput(finishcomment_cb);
 				}
 			}
-			else if (state == 1)
+			else if (inputstate == 1)
 			{
-				if (!comment_overlapping(
-					min(commentstart, offsetfromxy(cursx, cursy)),
-					max(commentstart, offsetfromxy(cursx, cursy))))
+				if (!comment_overlapping(model_selectionstart, model_selectionend))
 				{
-					state = 2;
+					setstate(2);
 				}
 			}
 			break;
@@ -135,29 +148,44 @@ static void normalmodeinput(int ch)
 		case KEY_ENTER:
 		case '\n':
 		case '\r':
-			if (state == 1)
+			if (inputstate == 1)
 			{
-				state = 2;
+				setstate(2);
 			}
 			break;
 
 		case 27:
-			if (state == 1)
+			if (inputstate == 1)
 			{
-				state = 0;
+				setstate(0);
 			}
 			break;
 
 		case 'q':
 		case 'Q':
-			run = 0;
+			app_running = 0;
 			break;
 	}
 }
 
+static void updateselection()
+{
+	model_selectionend = model_cursoroffset;
+
+	if (model_selectionend < model_selectionstart)
+	{
+		int temp = model_selectionstart;
+		model_selectionstart = model_selectionend;
+		model_selectionend = temp;
+	}
+
+	model_selectionlength = model_selectionend - model_selectionstart;
+	comment_highlighted = comment_at(model_cursoroffset);
+}
+
 void input_update()
 {
-	switch (state)
+	switch (inputstate)
 	{
 		case 2:
 			textinput(getch());
@@ -168,12 +196,12 @@ void input_update()
 			break;
 	}
 
-	comment_highlighted = comment_at(offsetfromxy(cursx, cursy));
+	updateselection();
 }
 
 void input_draw()
 {
-	if (state == 2)
+	if (inputstate == 2)
 	{
 		attron(COLOR_PAIR(3));
 		mvwprintw(stdscr, 0, 0, "comment: %s", commentbuffer);

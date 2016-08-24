@@ -1,4 +1,7 @@
+#include <stdint.h>
+
 #include "view.h"
+#include "model.h"
 
 void view_setup()
 {
@@ -15,4 +18,10 @@ void xyfromoffset(int offset, int* x, int* y)
 {
 	*x = offset % bytesperline;
 	*y = (offset - *x) / bytesperline;
+}
+
+void view_update()
+{
+	view_cursorx = model_cursorx;
+	view_cursory = model_cursory - screenscroll;
 }

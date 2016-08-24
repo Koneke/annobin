@@ -1,46 +1,48 @@
 #include <stdint.h>
 
-#include "global.h"
 #include "common.h"
 #include "view.h"
+#include "model.h"
 
 void validatecurs()
 {
-	if (cursx < 0)
+	if (model_cursorx < 0)
 	{
-		if (cursy > 0)
+		if (model_cursory > 0)
 		{
-			while (cursx < 0)
+			while (model_cursorx < 0)
 			{
-				cursx += bytesperline;
-				cursy -= 1;
+				model_cursorx += bytesperline;
+				model_cursory -= 1;
 			}
 		}
 		else
 		{
-			cursx = 0;
+			model_cursorx = 0;
 		}
 	}
-	else if (cursx >= bytesperline)
+	else if (model_cursorx >= bytesperline)
 	{
-		while (cursx >= bytesperline)
+		while (model_cursorx >= bytesperline)
 		{
-			cursx -= bytesperline;
-			cursy += 1;
+			model_cursorx -= bytesperline;
+			model_cursory += 1;
 		}
 	}
 
-	if (cursy < 0) cursy = 0;
+	if (model_cursory < 0) model_cursory = 0;
 
-	screenscroll = max(cursy, h / 2) - h / 2;
+	screenscroll = max(model_cursory, view_height / 2) - view_height / 2;
 	bytescroll = screenscroll * bytesperline;
 }
 
 void movecurs(int x, int y)
 {
-	cursx += x;
-	cursy += y;
+	model_cursorx += x;
+	model_cursory += y;
 
 	validatecurs();
+
+	model_cursoroffset = offsetfromxy(model_cursorx, model_cursory);
 }
 

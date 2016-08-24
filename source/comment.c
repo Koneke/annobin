@@ -2,10 +2,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "global.h"
 #include "comment.h"
 #include "common.h"
 #include "input.h" // THIS SHOULD NOT BE HERE BAD DESIGN, BAD
+#include "model.h"
 
 comment_t* comment_at(int position)
 {
