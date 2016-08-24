@@ -5,8 +5,9 @@
 #include "global.h"
 #include "comment.h"
 #include "common.h"
+#include "input.h" // THIS SHOULD NOT BE HERE BAD DESIGN, BAD
 
-comment_t* commentat(int position)
+comment_t* comment_at(int position)
 {
 	comment_t* current = head;
 
@@ -28,7 +29,17 @@ comment_t* commentat(int position)
 	return NULL;
 }
 
-void bumpcomments(comment_t* start)
+int comment_overlapping(int start, int end)
+{
+	for (int i = start; i <= end; i++)
+	{
+		if (comment_at(i)) return 1;
+	}
+
+	return 0;
+}
+
+static void bumpcomments(comment_t* start)
 {
 	comment_t* current = start;
 	while (current)
@@ -38,7 +49,7 @@ void bumpcomments(comment_t* start)
 	}
 }
 
-void shrumpcomments(comment_t* start)
+static void shrumpcomments(comment_t* start)
 {
 	comment_t* current = start;
 	while (current)
@@ -48,7 +59,7 @@ void shrumpcomments(comment_t* start)
 	}
 }
 
-comment_t* addcomment(int position, int length, char* comment)
+comment_t* comment_addcomment(int position, int length, char* comment)
 {
 	comment_t* new = malloc(sizeof(comment_t));
 
@@ -115,38 +126,16 @@ comment_t* addcomment(int position, int length, char* comment)
 	return new;
 }
 
-void finishcomment()
-{
-	char* comment = malloc(commentindex);
-	strcpy(comment, commentbuffer);
-
-	int comstart = min(commentstart, offsetfromxy(cursx, cursy));
-	int comend = max(commentstart, offsetfromxy(cursx, cursy));
-	addcomment(comstart, comend - comstart, comment);
-
-	strcpy(commentbuffer, "");
-}
-
-void deletecomment(comment_t* comment)
+void comment_delete(comment_t* comment)
 {
 	shrumpcomments(comment); // bump indexes down one
 	if (comment->prev) comment->prev->next = comment->next;
-	if (comment->next)
-	{
-		comment->next->prev = comment->prev;
-	}
+	if (comment->next) comment->next->prev = comment->prev;
 	if (comment == head) head = comment->next;
 	if (comment == tail) tail = comment->prev;
 }
 
-void begincomment()
-{
-	state = 1;
-	memset(commentbuffer, 0, 100);
-	commentstart = cursy * bytesperline + cursx;
-}
-
-void freeallcomments()
+void comment_freeall()
 {
 	comment_t* current = head;
 	while (head)

@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 typedef struct comment_s {
 	int index;
 	char* comment;
@@ -7,15 +9,14 @@ typedef struct comment_s {
 	struct comment_s* next;
 } comment_t;
 
-comment_t* commentat(int position);
-
+int commentstart;
 comment_t* head;
 comment_t* tail;
+comment_t* comment_highlighted;
 
-void bumpcomments(comment_t* start);
-void shrumpcomments(comment_t* start);
-comment_t* addcomment(int position, int length, char* comment);
-void finishcomment();
-void deletecomment(comment_t* comment);
-void begincomment();
-void freeallcomments();
+      void comment_finishcomment_cb(char* comment);
+comment_t* comment_addcomment(int position, int length, char* comment);
+      void comment_delete(comment_t* comment);
+comment_t* comment_at(int position);
+       int comment_overlapping(int start, int end);
+      void comment_freeall();

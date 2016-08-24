@@ -6,11 +6,6 @@ int min(int a, int b) { return a < b ? a : b; }
 
 int max(int a, int b) { return a > b ? a : b; }
 
-int offsetfromxy(int x, int y)
-{
-	return y * bytesperline + x;
-}
-
 char getprintchar(char c)
 {
 	if (

@@ -2,6 +2,7 @@
 
 #include "global.h"
 #include "common.h"
+#include "view.h"
 
 void validatecurs()
 {

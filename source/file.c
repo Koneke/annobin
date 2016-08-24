@@ -8,7 +8,14 @@
 #include <curses.h>
 
 #include "file.h"
+#include "global.h"
 #include "comment.h"
+
+void file_setup(char* filepath, char* annotpath)
+{
+	file = fopen("in.testfile", "r");
+	readannotfile("annot.testfile");
+}
 
 void readannotfile(char* path)
 {
@@ -31,7 +38,7 @@ void readannotfile(char* path)
 		for (int i = 0; i < cl + 1; i++)
 			comment[i] = fgetc(annot);
 
-		addcomment(be64toh(position), be64toh(length), comment);
+		comment_addcomment(be64toh(position), be64toh(length), comment);
 	}
 
 	fclose(annot);

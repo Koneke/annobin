@@ -1,0 +1,41 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+
+#include "global.h"
+
+#include "draw.h"
+#include "comment.h"
+#include "file.h"
+#include "input.h"
+#include "view.h"
+
+void app_setup(int argc, char** argv)
+{
+	file_setup(argv[1], argv[2]);
+	draw_setup();
+	input_setup();
+	view_setup();
+
+	int size = 20000;
+	buffer = malloc(size);
+	fread(buffer, 1, size, file);
+}
+
+void app_run()
+{
+	run = 1;
+	while (run)
+	{
+		draw_draw();
+		input_draw();
+		input_update();
+	}
+}
+
+void app_quit()
+{
+	comment_freeall();
+	free(buffer);
+	draw_quit();
+}

@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <ncurses.h>
 
@@ -7,8 +9,47 @@
 #include "comment.h"
 #include "cursor.h"
 #include "file.h"
+#include "view.h"
 
-int commentinput(char c)
+typedef void (*textinput_callback)(char*);
+
+static textinput_callback textcallback;
+static char commentbuffer[100];
+static int buffersize = 100;
+static int commentindex;
+
+static void resetbuffer()
+{
+	memset(commentbuffer, 0, buffersize);
+	commentindex = 0;
+}
+
+static void finishcomment_cb(char* comment)
+{
+	int comstart = min(commentstart, offsetfromxy(cursx, cursy));
+	int comend = max(commentstart, offsetfromxy(cursx, cursy));
+	comment_addcomment(comstart, comend - comstart, comment);
+}
+
+static char* input_clonebuffer()
+{
+	char* clone = malloc(commentindex);
+	strcpy(clone, commentbuffer);
+	return clone;
+}
+
+void input_setup()
+{
+	state = 0;
+	resetbuffer();
+}
+
+void input_starttextinput(textinput_callback callback)
+{
+	textcallback = callback;
+}
+
+static int textinput(char c)
 {
 	if (
 		(c >= 'A' && c <= 'Z') || 
@@ -27,27 +68,20 @@ int commentinput(char c)
 
 	if (c == KEY_ENTER || c == '\n' || c == '\r')
 	{
-		finishcomment();
-		commentindex = 0;
+		(textcallback)(input_clonebuffer());
+		resetbuffer();
 		return state = 0;
 	}
 
 	if (c == 27)
 	{
-		commentindex = 0;
+		resetbuffer();
 		return state = 0;
 	}
 }
 
-void input()
+static void normalmodeinput(int ch)
 {
-	int ch = getch();
-
-	if (state == 2)
-	{
-		if (commentinput(ch)) return;
-	}
-
 	switch (ch)
 	{
 		case 'h': case KEY_LEFT: movecurs(-1, 0); break;
@@ -64,27 +98,27 @@ void input()
 
 		case 'x': case 'X':
 		{
-			comment_t* comment = commentat(cursy * bytesperline + cursx);
+			comment_t* comment = comment_at(cursy * bytesperline + cursx);
 			if (comment)
-				deletecomment(comment);
+				comment_delete(comment);
 		}
 			break;
 
 		case 'c': case 'C':
 			if (state == 0)
 			{
-				if (!commentat(offsetfromxy(cursx, cursy)))
+				if (!comment_at(offsetfromxy(cursx, cursy)))
 				{
-					begincomment();
+					state = 1;
+					commentstart = offsetfromxy(cursx, cursy);
+					input_starttextinput(finishcomment_cb);
 				}
 			}
 			else if (state == 1)
 			{
-				int overlapping = 0;
-				for (int i = commentstart; i < offsetfromxy(cursx, cursy); i++)
-					overlapping += commentat(i) ? 1 : 0;
-
-				if (!overlapping)
+				if (!comment_overlapping(
+					min(commentstart, offsetfromxy(cursx, cursy)),
+					max(commentstart, offsetfromxy(cursx, cursy))))
 				{
 					state = 2;
 				}
@@ -105,9 +139,13 @@ void input()
 			{
 				state = 2;
 			}
+			break;
 
-		case 27: // escape:
-			if (state == 1) state = 0;
+		case 27:
+			if (state == 1)
+			{
+				state = 0;
+			}
 			break;
 
 		case 'q':
@@ -115,4 +153,32 @@ void input()
 			run = 0;
 			break;
 	}
+}
+
+void input_update()
+{
+	switch (state)
+	{
+		case 2:
+			textinput(getch());
+			break;
+		case 0:
+		case 1:
+			normalmodeinput(getch());
+			break;
+	}
+
+	comment_highlighted = comment_at(offsetfromxy(cursx, cursy));
+}
+
+void input_draw()
+{
+	if (state == 2)
+	{
+		attron(COLOR_PAIR(3));
+		mvwprintw(stdscr, 0, 0, "comment: %s", commentbuffer);
+		attroff(COLOR_PAIR(3));
+	}
+
+	refresh();
 }
