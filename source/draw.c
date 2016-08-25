@@ -61,22 +61,22 @@ static void drawdata()
 	int commentswritten = -1;
 	for (int y = 0; y < view_height; y++)
 	{
-		offset = bytescroll + y * bytesperline;
+		offset = view_bytescroll + y * view_bytesperline;
 
 		// print offset in left margin
 		attron(COLOR_PAIR(1));
 		mvwprintw(stdscr, y, 0, "%06x", offset);
 		attroff(COLOR_PAIR(1));
 
-		for (int i = 0; i < bytesperline; i++)
+		for (int i = 0; i < view_bytesperline; i++)
 		{
-			offset = bytescroll + y * bytesperline + i;
+			offset = view_bytescroll + y * view_bytesperline + i;
 
 			setcolor(offset);
 
 			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", buffer[offset]);
 
-			mvwprintw(stdscr, y, 10 + i + 3 * bytesperline,"%c", getprintchar(buffer[offset]));
+			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline,"%c", getprintchar(buffer[offset]));
 
 			attroff(COLOR_PAIR(1));
 			attroff(COLOR_PAIR(2));
@@ -88,13 +88,13 @@ static void drawcomments()
 {
 	int offset;
 	int commentlast = -1; // line (so we don't overlap comments)
-	int commentswritten = -1;
+	int lastcommentindex = -1;
 
 	for (int y = 0; y < view_height; y++)
 	{
-		for (int x = 0; x < bytesperline; x++)
+		for (int x = 0; x < view_bytesperline; x++)
 		{
-			offset = bytescroll + y * bytesperline + x;
+			offset = view_bytescroll + y * view_bytesperline + x;
 
 			comment_t* comment;
 			if (comment = comment_at(offset))
@@ -108,12 +108,12 @@ static void drawcomments()
 					attron(COLOR_PAIR(1 + (comment->index % 2)));
 				}
 
-				if (comment->index > commentswritten)
+				if (comment->index > lastcommentindex)
 				{
 					int commenty = max(commentlast, y);
 
-					mvwprintw(stdscr, commenty, 28 + 3 * bytesperline, "%s", comment->comment);
-					commentswritten++;
+					mvwprintw(stdscr, commenty, 28 + 3 * view_bytesperline, "%s", comment->comment);
+					lastcommentindex = comment->index;
 					commentlast = commenty + 1;
 				}
 			}

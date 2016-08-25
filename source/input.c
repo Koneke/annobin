@@ -101,7 +101,7 @@ static void normalmodeinput(int ch)
 	switch (ch)
 	{
 		case 'h': case KEY_LEFT: movecurs(-1, 0); break;
-		case 'H': movecurs(-bytesperline / 2, 0); break;
+		case 'H': movecurs(-view_bytesperline / 2, 0); break;
 
 		case 'j': case KEY_DOWN: movecurs(0, 1); break;
 		case 'J': movecurs(0, 5); break;
@@ -110,7 +110,7 @@ static void normalmodeinput(int ch)
 		case 'K': movecurs(0, -5); break;
 
 		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
-		case 'L': movecurs(bytesperline / 2, 0); break;
+		case 'L': movecurs(view_bytesperline / 2, 0); break;
 
 		case 'x': case 'X':
 		{

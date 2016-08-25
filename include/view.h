@@ -3,9 +3,9 @@
 
 int view_width, view_height;
 
-int screenscroll;
-int bytesperline;
-int bytescroll;
+int view_screenscroll;
+int view_bytesperline;
+int view_bytescroll;
 
 void view_setup();
 void view_update();

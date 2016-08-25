@@ -11,7 +11,7 @@ void validatecurs()
 		{
 			while (model_cursorx < 0)
 			{
-				model_cursorx += bytesperline;
+				model_cursorx += view_bytesperline;
 				model_cursory -= 1;
 			}
 		}
@@ -20,19 +20,16 @@ void validatecurs()
 			model_cursorx = 0;
 		}
 	}
-	else if (model_cursorx >= bytesperline)
+	else if (model_cursorx >= view_bytesperline)
 	{
-		while (model_cursorx >= bytesperline)
+		while (model_cursorx >= view_bytesperline)
 		{
-			model_cursorx -= bytesperline;
+			model_cursorx -= view_bytesperline;
 			model_cursory += 1;
 		}
 	}
 
 	if (model_cursory < 0) model_cursory = 0;
-
-	screenscroll = max(model_cursory, view_height / 2) - view_height / 2;
-	bytescroll = screenscroll * bytesperline;
 }
 
 void movecurs(int x, int y)
