@@ -18,10 +18,20 @@ typedef enum e_inputstate_e {
 	inputstate_text = 2
 } e_inputstate;
 
+typedef enum e_inputmask_e {
+	inputmask_none = 0,
+	inputmask_letters = 1,
+	inputmask_whitespace = 2,
+	inputmask_punctuation = 4,
+	inputmask_numbers = 8,
+	inputmask_hex = 16
+} e_inputmask;
+
 typedef void (*textinput_callback)(char*);
 
 static int inputstate;
 static textinput_callback textcallback;
+static int inputmask;
 static char inputbuffer[100];
 static int inputindex;
 
@@ -65,19 +75,52 @@ void input_setup()
 	resetbuffer();
 }
 
-void input_starttextinput(textinput_callback callback)
+void input_starttextinput(textinput_callback callback, int mask)
 {
 	textcallback = callback;
+	inputmask = mask;
+}
+
+static int isInRange(char c, char low, char high)
+{
+	return c >= low && c <= high;
+}
+
+static int isLetter(char c)
+{
+	return isInRange(c, 'A', 'Z') || isInRange(c, 'a', 'z');
+}
+
+static int isNumber(char c)
+{
+	return isInRange(c, '0', '9');
+}
+
+static int isHex(char c)
+{
+	return isNumber(c) || isInRange(c, 'A', 'F') || isInRange(c, 'a', 'f');
+}
+
+static int isPunctuation(char c)
+{
+	return c == ',' || c == '.';
+}
+
+static int isWhitespace(char c)
+{
+	return c == ' ';
 }
 
 static int textinput(char c)
 {
 	if (
-		(c >= 'A' && c <= 'Z') || 
-		(c >= 'a' && c <= 'z') ||
-		(c >= '0' && c <= '9') ||
-		(c == '.' || c == ',' || c == ' ')
-	) {
+		!inputmask ||
+		(isLetter(c) && inputmask & inputmask_letters) ||
+		(isNumber(c) && inputmask & inputmask_numbers) ||
+		(isHex(c) && inputmask & inputmask_hex) ||
+		(isPunctuation(c) && inputmask & inputmask_punctuation) ||
+		(isWhitespace(c) && inputmask & inputmask_whitespace))
+	{
 		inputbuffer[inputindex++] = c;
 	}
 
@@ -157,7 +200,9 @@ static void normalmodeinput(int ch)
 		{
 			comment_t* comment = comment_at(model_cursoroffset);
 			if (comment)
+			{
 				comment_delete(comment);
+			}
 		}
 			break;
 
@@ -166,7 +211,7 @@ static void normalmodeinput(int ch)
 			{
 				setstate(inputstate_select);
 				model_selectionstart = model_cursoroffset;
-				input_starttextinput(finishcomment_cb);
+				input_starttextinput(finishcomment_cb, inputmask_none);
 			}
 			break;
 
