@@ -28,6 +28,7 @@ void app_run()
 		draw_draw();
 		input_draw();
 		input_update();
+		model_update();
 		view_update();
 	}
 }

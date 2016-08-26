@@ -12,12 +12,16 @@
 
 #define BUFFER_SIZE 100
 
+typedef enum e_inputstate_e {
+	inputstate_normal = 0,
+	inputstate_select = 1,
+	inputstate_text = 2
+} e_inputstate;
+
 typedef void (*textinput_callback)(char*);
 
 static int inputstate;
-
 static textinput_callback textcallback;
-
 static char inputbuffer[100];
 static int inputindex;
 
@@ -29,7 +33,10 @@ static void resetbuffer()
 
 static void finishcomment_cb(char* comment)
 {
-	comment_addcomment(model_selectionstart, model_selectionlength, comment);
+	comment_addcomment(
+		model_selection_firstOffset(),
+		model_selection_length(),
+		comment);
 }
 
 static char* input_clonebuffer()
@@ -39,11 +46,11 @@ static char* input_clonebuffer()
 	return clone;
 }
 
-static int setstate(int _state)
+static int setstate(e_inputstate _state)
 {
 	switch (_state)
 	{
-		case 0:
+		case inputstate_normal:
 			model_selectionstart = -1;
 			model_selectionend = -1;
 			model_selectionlength = -1;
@@ -52,10 +59,9 @@ static int setstate(int _state)
 	return inputstate = _state;
 }
 
-
 void input_setup()
 {
-	setstate(0);
+	setstate(inputstate_normal);
 	resetbuffer();
 }
 
@@ -96,6 +102,41 @@ static int textinput(char c)
 	}
 }
 
+static void selectmodeinput(int ch)
+{
+	switch (ch)
+	{
+		case 'h': case KEY_LEFT: movecurs(-1, 0); break;
+		case 'H': movecurs(-view_bytesperline / 2, 0); break;
+
+		case 'j': case KEY_DOWN: movecurs(0, 1); break;
+		case 'J': movecurs(0, 5); break;
+
+		case 'k': case KEY_UP: movecurs(0, -1); break;
+		case 'K': movecurs(0, -5); break;
+
+		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
+		case 'L': movecurs(view_bytesperline / 2, 0); break;
+
+		case 'c': case 'C':
+			if (!model_selection_isOverlappingComments())
+			{
+				setstate(inputstate_text);
+			}
+			break;
+
+		case KEY_ENTER:
+		case '\n':
+		case '\r':
+			setstate(inputstate_text);
+			break;
+
+		case 27: // escape
+			setstate(inputstate_normal);
+			break;
+	}
+}
+
 static void normalmodeinput(int ch)
 {
 	switch (ch)
@@ -121,21 +162,11 @@ static void normalmodeinput(int ch)
 			break;
 
 		case 'c': case 'C':
-			if (inputstate == 0)
+			if (!comment_at(model_cursoroffset))
 			{
-				if (!comment_at(model_cursoroffset))
-				{
-					setstate(1);
-					model_selectionstart = model_cursoroffset;
-					input_starttextinput(finishcomment_cb);
-				}
-			}
-			else if (inputstate == 1)
-			{
-				if (!comment_overlapping(model_selectionstart, model_selectionend))
-				{
-					setstate(2);
-				}
+				setstate(inputstate_select);
+				model_selectionstart = model_cursoroffset;
+				input_starttextinput(finishcomment_cb);
 			}
 			break;
 
@@ -146,22 +177,6 @@ static void normalmodeinput(int ch)
 			}
 			break;
 
-		case KEY_ENTER:
-		case '\n':
-		case '\r':
-			if (inputstate == 1)
-			{
-				setstate(2);
-			}
-			break;
-
-		case 27:
-			if (inputstate == 1)
-			{
-				setstate(0);
-			}
-			break;
-
 		case 'q':
 		case 'Q':
 			app_running = 0;
@@ -169,44 +184,33 @@ static void normalmodeinput(int ch)
 	}
 }
 
-static void updateselection()
+static void selectmodedraw()
 {
-	model_selectionend = model_cursoroffset;
+}
 
-	if (model_selectionend < model_selectionstart)
-	{
-		int temp = model_selectionstart;
-		model_selectionstart = model_selectionend;
-		model_selectionend = temp;
-	}
-
-	model_selectionlength = model_selectionend - model_selectionstart;
-	comment_highlighted = comment_at(model_cursoroffset);
+static void textmodedraw()
+{
+	attron(COLOR_PAIR(3));
+	mvwprintw(stdscr, view_height / 2, 0, "Comment: %s", inputbuffer);
+	attroff(COLOR_PAIR(3));
 }
 
 void input_update()
 {
 	switch (inputstate)
 	{
-		case 2:
-			textinput(getch());
-			break;
-		case 0:
-		case 1:
-			normalmodeinput(getch());
-			break;
+		case inputstate_normal: normalmodeinput(getch()); break;
+		case inputstate_select: selectmodeinput(getch()); break;
+		case inputstate_text: textinput(getch()); break;
 	}
-
-	updateselection();
 }
 
 void input_draw()
 {
-	if (inputstate == 2)
+	switch (inputstate)
 	{
-		attron(COLOR_PAIR(3));
-		mvwprintw(stdscr, 0, 0, "comment: %s", inputbuffer);
-		attroff(COLOR_PAIR(3));
+		case inputstate_select: selectmodedraw(); break;
+		case inputstate_text: textmodedraw(); break;
 	}
 
 	refresh();

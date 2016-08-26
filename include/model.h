@@ -13,3 +13,8 @@ int model_selectionlength;
 int model_cursorx;
 int model_cursory;
 int model_cursoroffset;
+int model_selection_firstOffset();
+int model_selection_lastOffset();
+int model_selection_length();
+int model_selection_isOverlappingComments();
+void model_update();

@@ -43,7 +43,11 @@ static void setcolor(int offset)
 		}
 	}
 
-	if (model_selectionstart != -1 && offset >= model_selectionstart && offset <= model_selectionend)
+	// if (model_selectionstart != -1 && offset >= model_selectionstart && offset <= model_selectionend)
+	if (
+		model_selectionstart != -1 &&
+		offset >= model_selection_firstOffset() &&
+		offset <= model_selection_lastOffset())
 	{
 		attron(COLOR_PAIR(4));
 	}
@@ -73,9 +77,7 @@ static void drawdata()
 			offset = view_bytescroll + y * view_bytesperline + i;
 
 			setcolor(offset);
-
 			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", buffer[offset]);
-
 			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline,"%c", getprintchar(buffer[offset]));
 
 			attroff(COLOR_PAIR(1));
