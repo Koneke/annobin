@@ -9,6 +9,7 @@ int view_bytescroll;
 
 void view_setup();
 void view_update();
+void xyfromoffset(int offset, int* x, int* y);
 int offsetfromxy(int x, int y);
 char getprintchar(char c);
 

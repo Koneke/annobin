@@ -3,6 +3,12 @@
 #include "common.h"
 #include "view.h"
 
+void cursor_setOffset(int offset)
+{
+	xyfromoffset(offset, &model_cursorx, &model_cursory);
+	model_cursoroffset = offset;
+}
+
 void validatecurs()
 {
 	if (model_cursorx < 0)

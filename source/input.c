@@ -42,6 +42,13 @@ static void resetbuffer()
 	inputindex = 0;
 }
 
+static void goto_cb(char* address)
+{
+	unsigned int offset;
+	sscanf(address, "%x", &offset);
+	cursor_setOffset(offset);
+}
+
 static void finishcomment_cb(char* comment)
 {
 	comment_addcomment(
@@ -80,6 +87,8 @@ void input_starttextinput(textinput_callback callback, int mask)
 {
 	textcallback = callback;
 	inputmask = mask;
+	setstate(inputstate_text);
+	refresh();
 }
 
 static int textinput(char c)
@@ -132,17 +141,14 @@ static void selectmodeinput(int ch)
 		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
 		case 'L': movecurs(view_bytesperline / 2, 0); break;
 
-		case 'c': case 'C':
-			if (!model_selection_isOverlappingComments())
-			{
-				setstate(inputstate_text);
-			}
-			break;
-
 		case KEY_ENTER:
 		case '\n':
 		case '\r':
-			setstate(inputstate_text);
+		case 'c': case 'C':
+			if (!model_selection_isOverlappingComments())
+			{
+				input_starttextinput(finishcomment_cb, inputmask_none);
+			}
 			break;
 
 		case 27: // escape
@@ -177,12 +183,15 @@ static void normalmodeinput(int ch)
 		}
 			break;
 
+		case 'g': case 'G':
+			input_starttextinput(goto_cb, inputmask_hex);
+			break;
+
 		case 'c': case 'C':
 			if (!comment_at(model_cursoroffset))
 			{
 				setstate(inputstate_select);
 				model_selectionstart = model_cursoroffset;
-				input_starttextinput(finishcomment_cb, inputmask_none);
 			}
 			break;
 
