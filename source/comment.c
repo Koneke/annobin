@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <curses.h>
+
 #include "model.h"
 
 comment_t* comment_at(int position)

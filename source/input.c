@@ -157,6 +157,38 @@ static void selectmodeinput(int ch)
 	}
 }
 
+static void gotoNextComment()
+{
+	comment_t* comment = head;
+
+	while (comment)
+	{
+		if (comment->position > model_cursoroffset)
+		{
+			model_cursoroffset = comment->position;
+			return;
+		}
+
+		comment = comment->next;
+	}
+}
+
+static void gotoPreviousComment()
+{
+	comment_t* comment = tail;
+
+	while (comment)
+	{
+		if (comment->position < model_cursoroffset)
+		{
+			model_cursoroffset = comment->position;
+			return;
+		}
+
+		comment = comment->prev;
+	}
+}
+
 static void normalmodeinput(int ch)
 {
 	switch (ch)
@@ -172,6 +204,9 @@ static void normalmodeinput(int ch)
 
 		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
 		case 'L': movecurs(view_bytesperline / 2, 0); break;
+
+		case 'n': gotoNextComment(); break;
+		case 'p': gotoPreviousComment(); break;
 
 		case 'x': case 'X':
 		{
