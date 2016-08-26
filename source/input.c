@@ -9,6 +9,7 @@
 #include "file.h"
 #include "view.h"
 #include "app.h"
+#include "chartools.h"
 
 #define BUFFER_SIZE 100
 
@@ -81,36 +82,6 @@ void input_starttextinput(textinput_callback callback, int mask)
 	inputmask = mask;
 }
 
-static int isInRange(char c, char low, char high)
-{
-	return c >= low && c <= high;
-}
-
-static int isLetter(char c)
-{
-	return isInRange(c, 'A', 'Z') || isInRange(c, 'a', 'z');
-}
-
-static int isNumber(char c)
-{
-	return isInRange(c, '0', '9');
-}
-
-static int isHex(char c)
-{
-	return isNumber(c) || isInRange(c, 'A', 'F') || isInRange(c, 'a', 'f');
-}
-
-static int isPunctuation(char c)
-{
-	return c == ',' || c == '.';
-}
-
-static int isWhitespace(char c)
-{
-	return c == ' ';
-}
-
 static int textinput(char c)
 {
 	if (
@@ -135,13 +106,13 @@ static int textinput(char c)
 	{
 		(textcallback)(input_clonebuffer());
 		resetbuffer();
-		return setstate(0);
+		return setstate(inputstate_normal);
 	}
 
 	if (c == 27)
 	{
 		resetbuffer();
-		return setstate(0);
+		return setstate(inputstate_normal);
 	}
 }
 
