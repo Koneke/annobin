@@ -29,14 +29,6 @@ int model_selection_isOverlappingComments()
 	return 0;
 }
 
-static void selection_update()
-{
-	model_selectionend = model_cursoroffset;
-	model_selectionlength = model_selection_lastOffset() - model_selection_firstOffset();
-	comment_highlighted = comment_at(model_cursoroffset);
-}
-
 void model_update()
 {
-	selection_update();
 }

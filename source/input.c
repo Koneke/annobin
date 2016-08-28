@@ -5,7 +5,6 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "cursor.h"
 #include "file.h"
 #include "view.h"
 #include "app.h"
@@ -93,7 +92,12 @@ void input_starttextinput(textinput_callback callback, int mask)
 
 static int textinput(char c)
 {
-	if (
+	if (c == 127 || c == 8)
+	{
+		inputbuffer[--inputindex] = '\0';
+		inputindex = clamp(inputindex, 0, BUFFER_SIZE - 1);
+	}
+	else if (
 		!inputmask ||
 		(isLetter(c) && inputmask & inputmask_letters) ||
 		(isNumber(c) && inputmask & inputmask_numbers) ||
@@ -102,11 +106,6 @@ static int textinput(char c)
 		(isWhitespace(c) && inputmask & inputmask_whitespace))
 	{
 		inputbuffer[inputindex++] = c;
-	}
-
-	if (c == 127 || c == 8)
-	{
-		inputbuffer[--inputindex] = '\0';
 	}
 
 	inputindex = clamp(inputindex, 0, BUFFER_SIZE - 1);
@@ -127,19 +126,20 @@ static int textinput(char c)
 
 static void selectmodeinput(int ch)
 {
+	int dx = 0, dy = 0;
 	switch (ch)
 	{
-		case 'h': case KEY_LEFT: movecurs(-1, 0); break;
-		case 'H': movecurs(-view_bytesperline / 2, 0); break;
+		case 'h': case KEY_LEFT: dx = -1; dy = 0; break;
+		case 'H': dx = -view_bytesperline / 2; dy = 0; break;
 
-		case 'j': case KEY_DOWN: movecurs(0, 1); break;
-		case 'J': movecurs(0, 5); break;
+		case 'j': case KEY_DOWN: dx = 0; dy = 1; break;
+		case 'J': dx = 0; dy = 5; break;
 
-		case 'k': case KEY_UP: movecurs(0, -1); break;
-		case 'K': movecurs(0, -5); break;
+		case 'k': case KEY_UP: dx = 0; dy = -1; break;
+		case 'K': dx = 0; dy = -5; break;
 
-		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
-		case 'L': movecurs(view_bytesperline / 2, 0); break;
+		case 'l': case KEY_RIGHT: dx = 1; dy = 0; break;
+		case 'L': dx = view_bytesperline / 2; dy = 0; break;
 
 		case KEY_ENTER:
 		case '\n':
@@ -155,6 +155,8 @@ static void selectmodeinput(int ch)
 			setstate(inputstate_normal);
 			break;
 	}
+
+	movecurs(dx, dy);
 }
 
 static void gotoNextComment()
