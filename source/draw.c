@@ -7,6 +7,28 @@
 
 static const int leftmarginwidth = 6;
 
+static char getprintchar(char c)
+{
+	if (
+		(c >= 'A' && c <= 'Z') || 
+		(c >= 'a' && c <= 'z') ||
+		(c >= '0' && c <= '9')
+	) {
+		return c;
+	}
+
+	return '_';
+
+	switch(c)
+	{
+		case 0:
+		case 0x0d: // cr
+			return ' ';
+	}
+
+	return c;
+}
+
 void draw_setup()
 {
 	initscr();
@@ -43,7 +65,6 @@ static void setcolor(int offset)
 		}
 	}
 
-	// if (model_selectionstart != -1 && offset >= model_selectionstart && offset <= model_selectionend)
 	if (
 		model_selectionstart != -1 &&
 		offset >= model_selection_firstOffset() &&
@@ -63,6 +84,7 @@ static void drawdata()
 	int offset;
 	int commentlast = -1; // line (so we don't overlap comments)
 	int commentswritten = -1;
+
 	for (int y = 0; y < view_height; y++)
 	{
 		offset = view_bytescroll + y * view_bytesperline;

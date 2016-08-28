@@ -29,7 +29,7 @@ typedef enum e_inputmask_e {
 
 typedef void (*textinput_callback)(char*);
 
-static int inputstate;
+static e_inputstate inputstate;
 static textinput_callback textcallback;
 static int inputmask;
 static char inputbuffer[100];
@@ -45,7 +45,7 @@ static void goto_cb(char* address)
 {
 	unsigned int offset;
 	sscanf(address, "%x", &offset);
-	cursor_setOffset(offset);
+	view_cursor_setOffset(offset);
 }
 
 static void finishcomment_cb(char* comment)
@@ -156,7 +156,7 @@ static void selectmodeinput(int ch)
 			break;
 	}
 
-	movecurs(dx, dy);
+	view_cursor_move(dx, dy);
 }
 
 static void gotoNextComment()
@@ -193,19 +193,21 @@ static void gotoPreviousComment()
 
 static void normalmodeinput(int ch)
 {
+	int dx = 0, dy = 0;
+
 	switch (ch)
 	{
-		case 'h': case KEY_LEFT: movecurs(-1, 0); break;
-		case 'H': movecurs(-view_bytesperline / 2, 0); break;
+		case 'h': case KEY_LEFT: dx = -1; dy = 0; break;
+		case 'H': dx = -view_bytesperline / 2; dy = 0; break;
 
-		case 'j': case KEY_DOWN: movecurs(0, 1); break;
-		case 'J': movecurs(0, 5); break;
+		case 'j': case KEY_DOWN: dx = 0; dy = 1; break;
+		case 'J': dx = 0; dy = 5; break;
 
-		case 'k': case KEY_UP: movecurs(0, -1); break;
-		case 'K': movecurs(0, -5); break;
+		case 'k': case KEY_UP: dx = 0; dy = -1; break;
+		case 'K': dx = 0; dy = -5; break;
 
-		case 'l': case KEY_RIGHT: movecurs(1, 0); break;
-		case 'L': movecurs(view_bytesperline / 2, 0); break;
+		case 'l': case KEY_RIGHT: dx = 1; dy = 0; break;
+		case 'L': dx = view_bytesperline / 2; dy = 0; break;
 
 		case 'n': gotoNextComment(); break;
 		case 'p': gotoPreviousComment(); break;
@@ -244,6 +246,8 @@ static void normalmodeinput(int ch)
 			app_running = 0;
 			break;
 	}
+
+	view_cursor_move(dx, dy);
 }
 
 static void selectmodedraw()

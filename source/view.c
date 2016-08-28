@@ -7,26 +7,28 @@ void view_setup()
 {
 	view_bytesperline = 16;
 	view_bytescroll = 0;
+	view_cursorx = 0;
+	view_cursory = 0;
 }
 
-int offsetfromxy(int x, int y)
+static int offsetfromxy(int x, int y)
 {
 	return y * view_bytesperline + x;
 }
 
-void xyfromoffset(int offset, int* x, int* y)
+static void xyfromoffset(int offset, int* x, int* y)
 {
 	*x = offset % view_bytesperline;
 	*y = (offset - *x) / view_bytesperline;
 }
 
-void cursor_setOffset(int offset)
+void view_cursor_setOffset(int offset)
 {
 	xyfromoffset(offset, &view_cursorx, &view_cursory);
 	model_cursoroffset = offset;
 }
 
-static void validatecurs()
+static void validatecursor()
 {
 	if (view_cursorx < 0)
 	{
@@ -58,14 +60,14 @@ static void validatecurs()
 	}
 }
 
-void movecurs(int x, int y)
+void view_cursor_move(int x, int y)
 {
 	view_cursorx += x;
 	view_cursory += y;
 
-	validatecurs();
+	validatecursor();
 
-	model_cursoroffset = offsetfromxy(view_cursorx, view_cursory);
+	model_cursoroffset += x + y * view_bytesperline;
 
 	model_selectionend = model_cursoroffset;
 	model_selectionlength = model_selection_lastOffset() - model_selection_firstOffset();
@@ -74,9 +76,6 @@ void movecurs(int x, int y)
 
 void view_update()
 {
-	view_cursorx = view_cursorx;
-	view_cursory = view_cursory - view_screenscroll;
-
-	view_screenscroll = max(view_cursory, view_height / 2) - view_height / 2;
-	view_bytescroll = view_screenscroll * view_bytesperline;
+	view_bytescroll = max(view_cursory, view_height / 2) - view_height / 2;
+	view_bytescroll *= view_bytesperline;
 }

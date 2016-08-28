@@ -23,7 +23,10 @@ int model_selection_isOverlappingComments()
 
 	for (int i = start; i <= end; i++)
 	{
-		if (comment_at(i)) return 1;
+		if (comment_at(i))
+		{
+			return 1;
+		}
 	}
 
 	return 0;
