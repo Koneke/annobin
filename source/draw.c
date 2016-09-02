@@ -99,8 +99,10 @@ static void drawdata()
 			offset = view_bytescroll + y * view_bytesperline + i;
 
 			setcolor(offset);
-			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", buffer[offset]);
-			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline,"%c", getprintchar(buffer[offset]));
+			mvwprintw(stdscr, y, 8 + i * 3,
+				"%02x ", model_buffer[offset]);
+			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline,
+				"%c", getprintchar(model_buffer[offset]));
 
 			attroff(COLOR_PAIR(1));
 			attroff(COLOR_PAIR(2));

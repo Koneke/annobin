@@ -161,7 +161,7 @@ static void selectmodeinput(int ch)
 
 static void gotoNextComment()
 {
-	comment_t* comment = head;
+	comment_t* comment = comment_head;
 
 	while (comment)
 	{
@@ -177,7 +177,7 @@ static void gotoNextComment()
 
 static void gotoPreviousComment()
 {
-	comment_t* comment = tail;
+	comment_t* comment = comment_tail;
 
 	while (comment)
 	{

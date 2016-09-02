@@ -8,16 +8,17 @@
 #include "view.h"
 #include "app.h"
 
+#define BUFFER_SIZE 20000
+
 void app_setup(int argc, char** argv)
 {
+	// make sure to setup model before file,
+	// since file expects there to be a buffer already.
+	model_setup(BUFFER_SIZE);
 	file_setup(argv[1], argv[2]);
 	draw_setup();
 	input_setup();
 	view_setup();
-
-	int size = 20000;
-	buffer = malloc(size);
-	fread(buffer, 1, size, file);
 }
 
 void app_run()
@@ -35,7 +36,6 @@ void app_run()
 
 void app_quit()
 {
-	comment_freeall();
-	free(buffer);
+	model_quit();
 	draw_quit();
 }

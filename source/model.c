@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "model.h"
 #include "common.h"
 
@@ -32,6 +34,27 @@ int model_selection_isOverlappingComments()
 	return 0;
 }
 
+void model_setup(int buffersize)
+{
+	model_buffersize = buffersize;
+	model_buffer = malloc(model_buffersize);
+}
+
 void model_update()
 {
+}
+
+void model_quit()
+{
+	comment_t* current = comment_head;
+	comment_t* next = current;
+
+	while (current)
+	{
+		next = current->next;
+		free(current);
+		current = next;
+	}
+
+	free(model_buffer);
 }

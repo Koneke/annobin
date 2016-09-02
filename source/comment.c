@@ -1,14 +1,10 @@
 #include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
-#include <curses.h>
 
 #include "model.h"
 
 comment_t* comment_at(int position)
 {
-	comment_t* current = head;
+	comment_t* current = comment_head;
 
 	while (current)
 	{
@@ -62,57 +58,57 @@ comment_t* comment_addcomment(int position, int length, char* comment)
 {
 	comment_t* new = malloc(sizeof(comment_t));
 
-	comment_t* current = head;
-	comment_t* ahead = NULL;
+	comment_t* current = comment_head;
+	comment_t* next = NULL;
 	// we leave this when we hit END or
 	// find a comment AFTER the position we're inserting at
 	while (current && current->position < position)
 	{
-		ahead = current;
+		next = current;
 		current = current->next;
 	}
 
-	if (current) ahead = current;
+	if (current) next = current;
 
-	// no current, and an ahead behind us means we're tail now
-	if (ahead && ahead->position < position)
+	// no current, and an next behind us means we're comment_tail now
+	if (next && next->position < position)
 	{
-		ahead = NULL;
+		next = NULL;
 	}
 
-	// ahead should now be the first comment that should be
+	// next should now be the first comment that should be
 	// after ours, OR NULL if there was none.
-	if (ahead)
+	if (next)
 	{
-		new->index = ahead->index;
-		bumpcomments(ahead);
+		new->index = next->index;
+		bumpcomments(next);
 
-		if (ahead->prev)
+		if (next->prev)
 		{
-			new->prev = ahead->prev;
-			ahead->prev->next = new;
+			new->prev = next->prev;
+			next->prev->next = new;
 		}
-		else // we're head now
+		else // we're comment_head now
 		{
-			head = new;
+			comment_head = new;
 		}
 
-		ahead->prev = new;
-		new->next = ahead;
+		next->prev = new;
+		new->next = next;
 	}
 	else
 	{
-		if (tail)
+		if (comment_tail)
 		{
-			tail->next = new;
-			new->prev = tail;
-			new->index = tail->index + 1;
-			tail = new;
+			comment_tail->next = new;
+			new->prev = comment_tail;
+			new->index = comment_tail->index + 1;
+			comment_tail = new;
 		}
 		else
 		{
 			new->index = 0;
-			tail = new;
+			comment_tail = new;
 		}
 	}
 
@@ -120,7 +116,7 @@ comment_t* comment_addcomment(int position, int length, char* comment)
 	new->position = position;
 	new->length = length;
 
-	if (!head) head = new;
+	if (!comment_head) comment_head = new;
 
 	return new;
 }
@@ -130,17 +126,6 @@ void comment_delete(comment_t* comment)
 	shrumpcomments(comment); // bump indexes down one
 	if (comment->prev) comment->prev->next = comment->next;
 	if (comment->next) comment->next->prev = comment->prev;
-	if (comment == head) head = comment->next;
-	if (comment == tail) tail = comment->prev;
-}
-
-void comment_freeall()
-{
-	comment_t* current = head;
-	while (head)
-	{
-		current = head->next;
-		free(head);
-		head = current;
-	}
+	if (comment == comment_head) comment_head = comment->next;
+	if (comment == comment_tail) comment_tail = comment->prev;
 }
