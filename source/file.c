@@ -17,7 +17,22 @@ void file_setup(char* filepath, char* annotpath)
 {
 	file = fopen("in.testfile", "r");
 	readannotfile("annot.testfile");
+	file_readintomodelbuffer();
+}
+
+void file_readintomodelbuffer()
+{
 	fread(model_buffer, 1, BUFFER_SIZE, file);
+}
+
+void file_setoffset(int offset)
+{
+	fseek(file, offset, SEEK_SET);
+}
+
+void file_moveoffset(int offset)
+{
+	fseek(file, offset, SEEK_CUR);
 }
 
 void readannotfile(char* path)
@@ -38,8 +53,11 @@ void readannotfile(char* path)
 		int cl = be16toh(comlength);
 		char* comment = malloc(cl + 1);
 		memset(comment, 0, cl + 1);
+
 		for (int i = 0; i < cl + 1; i++)
+		{
 			comment[i] = fgetc(annot);
+		}
 
 		comment_addcomment(be64toh(position), be64toh(length), comment);
 	}
@@ -80,4 +98,9 @@ void writeannotfile(char* path)
 	fclose(annot);
 
 	message_important("wrote to %s", path);
+}
+
+void file_quit()
+{
+	fclose(file);
 }

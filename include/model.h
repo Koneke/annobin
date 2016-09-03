@@ -2,6 +2,7 @@
 
 uint8_t* model_buffer;
 int model_buffersize;
+int model_bufferoffset;
 
 comment_t* comment_highlighted;
 int model_selectionstart;

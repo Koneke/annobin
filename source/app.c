@@ -38,4 +38,5 @@ void app_quit()
 {
 	model_quit();
 	draw_quit();
+	file_quit();
 }
