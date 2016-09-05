@@ -34,14 +34,9 @@ int model_selection_isOverlappingComments()
 	return 0;
 }
 
-void model_setup(int buffersize)
+void model_setup()
 {
-	model_buffersize = buffersize;
-	model_buffer = malloc(model_buffersize);
-}
-
-void model_update()
-{
+	model_buffer = malloc(MODEL_BUFFER_SIZE);
 }
 
 void model_quit()

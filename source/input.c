@@ -5,8 +5,8 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "file.h"
-#include "view.h"
+#include "message.h"
+#include "draw.h"
 #include "app.h"
 #include "chartools.h"
 
@@ -39,13 +39,6 @@ static void resetbuffer()
 {
 	memset(inputbuffer, 0, BUFFER_SIZE);
 	inputindex = 0;
-}
-
-static void goto_cb(char* address)
-{
-	unsigned int offset;
-	sscanf(address, "%x", &offset);
-	view_cursor_setOffset(offset);
 }
 
 static void finishcomment_cb(char* comment)
@@ -124,6 +117,68 @@ static int textinput(char c)
 	}
 }
 
+void updateView()
+{
+	int magic = model_cursoroffset - model_bufferoffset; // buf rel cursor
+	int cursorY = (magic - (magic % view_bytesperline)) / view_bytesperline; // find y buf rel
+	view_bytescroll = max(cursorY, view_height / 2) - view_height / 2;
+	view_bytescroll *= view_bytesperline;
+}
+
+static int checkModelBufferRange()
+{
+	int lastOffset = model_bufferoffset;
+	int linejump = 0x40;
+	int margin = view_bytesperline * linejump;
+
+	int moved = 0;
+
+	while (model_cursoroffset - model_bufferoffset > MODEL_BUFFER_SIZE - margin)
+	{
+		model_bufferoffset += margin * 2;
+		moved = 1;
+	}
+
+	while (model_bufferoffset > 0 && (model_cursoroffset - model_bufferoffset) < margin)
+	{
+		model_bufferoffset -= margin * 2;
+		model_bufferoffset = max(model_bufferoffset, 0);
+
+		if (model_bufferoffset != lastOffset)
+		{
+			moved = 1;
+		}
+	}
+
+	if (moved)
+	{
+		file_setOffset(model_bufferoffset);
+		file_readintomodelbuffer();
+		updateView();
+	}
+}
+
+static void moveCursor(int dx, int dy)
+{
+	model_cursoroffset += dx + dy * view_bytesperline;
+	model_cursoroffset = max(model_cursoroffset, 0);
+
+	model_selectionend = model_cursoroffset;
+	model_selectionlength = model_selection_lastOffset() - model_selection_firstOffset();
+	comment_highlighted = comment_at(model_cursoroffset);
+
+	checkModelBufferRange();
+	updateView();
+}
+
+static void goto_cb(char* address)
+{
+	unsigned int offset;
+	sscanf(address, "%x", &offset);
+	model_cursoroffset = offset;
+	checkModelBufferRange();
+}
+
 static void selectmodeinput(int ch)
 {
 	int dx = 0, dy = 0;
@@ -156,7 +211,7 @@ static void selectmodeinput(int ch)
 			break;
 	}
 
-	view_cursor_move(dx, dy);
+	moveCursor(dx, dy);
 }
 
 static void gotoNextComment()
@@ -247,7 +302,7 @@ static void normalmodeinput(int ch)
 			break;
 	}
 
-	view_cursor_move(dx, dy);
+	moveCursor(dx, dy);
 }
 
 static void selectmodedraw()

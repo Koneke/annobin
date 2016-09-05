@@ -2,6 +2,7 @@
 
 #include "model.h"
 
+// notice! buffer independant position!
 comment_t* comment_at(int position)
 {
 	comment_t* current = comment_head;

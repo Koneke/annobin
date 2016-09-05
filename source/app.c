@@ -3,22 +3,17 @@
 #include <stdint.h>
 
 #include "draw.h"
-#include "file.h"
 #include "input.h"
-#include "view.h"
 #include "app.h"
-
-#define BUFFER_SIZE 20000
 
 void app_setup(int argc, char** argv)
 {
 	// make sure to setup model before file,
 	// since file expects there to be a buffer already.
-	model_setup(BUFFER_SIZE);
-	file_setup(argv[1], argv[2]);
+	model_setup();
 	draw_setup();
+	file_setup(argv[1], argv[2]);
 	input_setup();
-	view_setup();
 }
 
 void app_run()
@@ -29,8 +24,6 @@ void app_run()
 		draw_draw();
 		input_draw();
 		input_update();
-		model_update();
-		view_update();
 	}
 }
 

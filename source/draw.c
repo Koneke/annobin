@@ -3,7 +3,7 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "view.h"
+#include "draw.h"
 
 static const int leftmarginwidth = 6;
 
@@ -43,6 +43,9 @@ void draw_setup()
 	init_pair(7, COLOR_WHITE, COLOR_GREEN);
 	noecho();
 	getmaxyx(stdscr, view_height, view_width);
+
+	view_bytesperline = 16;
+	view_bytescroll = 0;
 }
 
 void draw_quit()
@@ -87,18 +90,19 @@ static void drawdata()
 
 	for (int y = 0; y < view_height; y++)
 	{
-		offset = view_bytescroll + y * view_bytesperline;
+		offset = model_bufferoffset + view_bytescroll + y * view_bytesperline;
 
-		// print offset in left margin
 		attron(COLOR_PAIR(1));
 		mvwprintw(stdscr, y, 0, "%06x", offset);
 		attroff(COLOR_PAIR(1));
 
 		for (int i = 0; i < view_bytesperline; i++)
 		{
+			// notice! not using model_bufferoffset!
+			// INTENTIONAL
 			offset = view_bytescroll + y * view_bytesperline + i;
 
-			setcolor(offset);
+			setcolor(model_bufferoffset + offset);
 			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", model_buffer[offset]);
 			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline, "%c", getprintchar(model_buffer[offset]));
 
@@ -118,7 +122,8 @@ static void drawcomments()
 	{
 		for (int x = 0; x < view_bytesperline; x++)
 		{
-			offset = view_bytescroll + y * view_bytesperline + x;
+			// comment_at is buffer position independant!
+			offset = model_bufferoffset + view_bytescroll + y * view_bytesperline + x;
 
 			comment_t* comment;
 			if (comment = comment_at(offset))

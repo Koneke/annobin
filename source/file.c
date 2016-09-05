@@ -11,21 +11,20 @@
 #include "file.h"
 #include "model.h"
 
-#define BUFFER_SIZE 20000
-
 void file_setup(char* filepath, char* annotpath)
 {
-	file = fopen("in.testfile", "r");
-	readannotfile("annot.testfile");
+	file = fopen(filepath, "r");
+	file_size = ftell(file);
+	readannotfile(annotpath);
 	file_readintomodelbuffer();
 }
 
 void file_readintomodelbuffer()
 {
-	fread(model_buffer, 1, BUFFER_SIZE, file);
+	fread(model_buffer, 1, MODEL_BUFFER_SIZE, file);
 }
 
-void file_setoffset(int offset)
+void file_setOffset(int offset)
 {
 	fseek(file, offset, SEEK_SET);
 }

@@ -11,6 +11,6 @@ void message_important(char* fmt, ...)
 	wmove(stdscr, 0, 0);
 	vwprintw(stdscr, fmt, args);
 	attroff(COLOR_PAIR(5));
-	getch();
+	while ('y' != getch()) ;
 	wbkgd(stdscr, COLOR_PAIR(0));
 }

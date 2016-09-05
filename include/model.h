@@ -1,8 +1,12 @@
+#include <stdio.h>
 #include "comment.h"
+#include "file.h"
+
+#define MODEL_BUFFER_SIZE 0x1000
 
 uint8_t* model_buffer;
-int model_buffersize;
-int model_bufferoffset;
+int model_bufferoffset; // byte
+int model_bufferSize; // size of current read in buffer (i.e. < MODEL_BUFFER_SIZE close to EOF)
 
 comment_t* comment_highlighted;
 int model_selectionstart;
@@ -13,6 +17,5 @@ int model_selection_firstOffset();
 int model_selection_lastOffset();
 int model_selection_length();
 int model_selection_isOverlappingComments();
-void model_setup(int buffersize);
-void model_update();
+void model_setup();
 void model_quit();
