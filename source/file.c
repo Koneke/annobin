@@ -14,7 +14,9 @@
 void file_setup(char* filepath, char* annotpath)
 {
 	file = fopen(filepath, "r");
+	fseek(file, 0, SEEK_END);
 	file_size = ftell(file);
+	fseek(file, 0, SEEK_SET);
 	readannotfile(annotpath);
 	file_readintomodelbuffer();
 }

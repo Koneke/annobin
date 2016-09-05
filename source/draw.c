@@ -3,9 +3,11 @@
 #include <ncurses.h>
 
 #include "common.h"
+#include "message.h"
 #include "draw.h"
 
-static const int leftmarginwidth = 6;
+static int leftmarginWidth;
+static char leftmarginFormat[20];
 
 static char getprintchar(char c)
 {
@@ -46,6 +48,15 @@ void draw_setup()
 
 	view_bytesperline = 16;
 	view_bytescroll = 0;
+
+	int temp = file_size;
+	while (temp)
+	{
+		temp /= 10;
+		leftmarginWidth++;
+	}
+
+	sprintf(leftmarginFormat, "%%0%ix", leftmarginWidth);
 }
 
 void draw_quit()
@@ -87,13 +98,20 @@ static void drawdata()
 	int offset;
 	int commentlast = -1; // line (so we don't overlap comments)
 	int commentswritten = -1;
+	int eof = 0;
 
-	for (int y = 0; y < view_height; y++)
+	for (int y = 0; (!eof) && y < view_height; y++)
 	{
 		offset = model_bufferoffset + view_bytescroll + y * view_bytesperline;
 
+		if (offset >= file_size)
+		{
+			eof = 1;
+			break;
+		}
+
 		attron(COLOR_PAIR(1));
-		mvwprintw(stdscr, y, 0, "%06x", offset);
+		mvwprintw(stdscr, y, 0, leftmarginFormat, offset);
 		attroff(COLOR_PAIR(1));
 
 		for (int i = 0; i < view_bytesperline; i++)
@@ -101,10 +119,15 @@ static void drawdata()
 			// notice! not using model_bufferoffset!
 			// INTENTIONAL
 			offset = view_bytescroll + y * view_bytesperline + i;
+			if (offset + model_bufferoffset >= file_size)
+			{
+				eof = 1;
+				break;
+			}
 
 			setcolor(model_bufferoffset + offset);
-			mvwprintw(stdscr, y, 8 + i * 3, "%02x ", model_buffer[offset]);
-			mvwprintw(stdscr, y, 10 + i + 3 * view_bytesperline, "%c", getprintchar(model_buffer[offset]));
+			mvwprintw(stdscr, y, leftmarginWidth + 2 + i * 3, "%02x ", model_buffer[offset]);
+			mvwprintw(stdscr, y, leftmarginWidth + 4 + i + 3 * view_bytesperline, "%c", getprintchar(model_buffer[offset]));
 
 			attroff(COLOR_PAIR(1));
 			attroff(COLOR_PAIR(2));
@@ -141,7 +164,7 @@ static void drawcomments()
 				{
 					int commenty = max(commentlast, y);
 
-					mvwprintw(stdscr, commenty, 28 + 3 * view_bytesperline, "%s", comment->comment);
+					mvwprintw(stdscr, commenty, leftmarginWidth + 22 + 3 * view_bytesperline, "%s", comment->comment);
 					lastcommentindex = comment->index;
 					commentlast = commenty + 1;
 				}

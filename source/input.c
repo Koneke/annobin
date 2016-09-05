@@ -162,6 +162,7 @@ static void moveCursor(int dx, int dy)
 {
 	model_cursoroffset += dx + dy * view_bytesperline;
 	model_cursoroffset = max(model_cursoroffset, 0);
+	model_cursoroffset = min(model_cursoroffset, file_size - 1);
 
 	model_selectionend = model_cursoroffset;
 	model_selectionlength = model_selection_lastOffset() - model_selection_firstOffset();
