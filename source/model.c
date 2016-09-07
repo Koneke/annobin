@@ -36,6 +36,7 @@ int model_selection_isOverlappingComments()
 
 void model_setup()
 {
+	model_displayMode = 0;
 	model_buffer = malloc(MODEL_BUFFER_SIZE);
 }
 

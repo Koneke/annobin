@@ -4,9 +4,9 @@
 
 int main(int argc, char** argv)
 {
-	if (argc < 3)
+	if (argc < 3 || argc > 4)
 	{
-		printf("usage: annobin <file> <annotation file>\n");
+		printf("usage: annobin <file> <annotation file> (optional: <translation file>)\n");
 		return 0;
 	}
 

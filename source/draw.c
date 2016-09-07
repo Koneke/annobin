@@ -48,7 +48,10 @@ void draw_setup()
 
 	view_bytesperline = 16;
 	view_bytescroll = 0;
+}
 
+void draw_postSetup()
+{
 	int temp = file_size;
 	while (temp)
 	{
@@ -100,7 +103,7 @@ static void drawdata()
 	int commentswritten = -1;
 	int eof = 0;
 
-	for (int y = 0; (!eof) && y < view_height; y++)
+	for (int y = 0; (!eof) && y < view_height - 1; y++)
 	{
 		offset = model_bufferoffset + view_bytescroll + y * view_bytesperline;
 
@@ -127,7 +130,17 @@ static void drawdata()
 
 			setcolor(model_bufferoffset + offset);
 			mvwprintw(stdscr, y, leftmarginWidth + 2 + i * 3, "%02x ", model_buffer[offset]);
-			mvwprintw(stdscr, y, leftmarginWidth + 4 + i + 3 * view_bytesperline, "%c", getprintchar(model_buffer[offset]));
+
+			int charTableX = leftmarginWidth + 4 + i + 3 * view_bytesperline;
+
+			if (model_displayMode == 0)
+			{
+				mvwprintw(stdscr, y, charTableX, "%c", getprintchar(model_buffer[offset]));
+			}
+			else if (model_displayMode == 1)
+			{
+				mvwprintw(stdscr, y, charTableX, "%c", getprintchar(model_translationTable[model_buffer[offset]]));
+			}
 
 			attroff(COLOR_PAIR(1));
 			attroff(COLOR_PAIR(2));
@@ -173,10 +186,23 @@ static void drawcomments()
 	}
 }
 
+static void drawStatusLine()
+{
+	char format[10];
+	char statusLine[view_width];
+	sprintf(format, "%%-%is", view_width);
+	sprintf(statusLine, "Table mode %i", model_displayMode);
+
+	attron(COLOR_PAIR(7));
+	mvwprintw(stdscr, view_height - 1, 0, format, statusLine);
+	attroff(COLOR_PAIR(7));
+}
+
 void draw_draw()
 {
 	clear();
 	drawdata();
 	drawcomments();
+	drawStatusLine();
 	refresh();
 }

@@ -182,21 +182,8 @@ static void goto_cb(char* address)
 
 static void selectmodeinput(int ch)
 {
-	int dx = 0, dy = 0;
 	switch (ch)
 	{
-		case 'h': case KEY_LEFT: dx = -1; dy = 0; break;
-		case 'H': dx = -view_bytesperline / 2; dy = 0; break;
-
-		case 'j': case KEY_DOWN: dx = 0; dy = 1; break;
-		case 'J': dx = 0; dy = 5; break;
-
-		case 'k': case KEY_UP: dx = 0; dy = -1; break;
-		case 'K': dx = 0; dy = -5; break;
-
-		case 'l': case KEY_RIGHT: dx = 1; dy = 0; break;
-		case 'L': dx = view_bytesperline / 2; dy = 0; break;
-
 		case KEY_ENTER:
 		case '\n':
 		case '\r':
@@ -211,8 +198,6 @@ static void selectmodeinput(int ch)
 			setstate(inputstate_normal);
 			break;
 	}
-
-	moveCursor(dx, dy);
 }
 
 static void gotoNextComment()
@@ -247,7 +232,7 @@ static void gotoPreviousComment()
 	}
 }
 
-static void normalmodeinput(int ch)
+static void anyModeInput(int ch)
 {
 	int dx = 0, dy = 0;
 
@@ -268,6 +253,16 @@ static void normalmodeinput(int ch)
 		case 'n': gotoNextComment(); break;
 		case 'p': gotoPreviousComment(); break;
 
+		case 't': case 'T': model_displayMode = !model_displayMode; break;
+	}
+
+	moveCursor(dx, dy);
+}
+
+static void normalmodeinput(int ch)
+{
+	switch (ch)
+	{
 		case 'x': case 'X':
 		{
 			comment_t* comment = comment_at(model_cursoroffset);
@@ -302,8 +297,6 @@ static void normalmodeinput(int ch)
 			app_running = 0;
 			break;
 	}
-
-	moveCursor(dx, dy);
 }
 
 static void selectmodedraw()
@@ -319,11 +312,14 @@ static void textmodedraw()
 
 void input_update()
 {
+	char ch = getch();
+	anyModeInput(ch);
+
 	switch (inputstate)
 	{
-		case inputstate_normal: normalmodeinput(getch()); break;
-		case inputstate_select: selectmodeinput(getch()); break;
-		case inputstate_text: textinput(getch()); break;
+		case inputstate_normal: normalmodeinput(ch); break;
+		case inputstate_select: selectmodeinput(ch); break;
+		case inputstate_text: textinput(ch); break;
 	}
 }
 

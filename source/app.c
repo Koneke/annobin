@@ -11,8 +11,18 @@ void app_setup(int argc, char** argv)
 	// make sure to setup model before file,
 	// since file expects there to be a buffer already.
 	model_setup();
-	file_setup(argv[1], argv[2]);
 	draw_setup();
+
+	if (argc == 3)
+	{
+		file_setup(argv[1], argv[2], NULL);
+	}
+	else if (argc == 4)
+	{
+		file_setup(argv[1], argv[2], argv[3]);
+	}
+
+	draw_postSetup();
 	input_setup();
 }
 

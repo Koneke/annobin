@@ -11,32 +11,7 @@
 #include "file.h"
 #include "model.h"
 
-void file_setup(char* filepath, char* annotpath)
-{
-	file = fopen(filepath, "r");
-	fseek(file, 0, SEEK_END);
-	file_size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	readannotfile(annotpath);
-	file_readintomodelbuffer();
-}
-
-void file_readintomodelbuffer()
-{
-	fread(model_buffer, 1, MODEL_BUFFER_SIZE, file);
-}
-
-void file_setOffset(int offset)
-{
-	fseek(file, offset, SEEK_SET);
-}
-
-void file_moveoffset(int offset)
-{
-	fseek(file, offset, SEEK_CUR);
-}
-
-void readannotfile(char* path)
+static void readannotfile(char* path)
 {
 	annot = fopen(path, "r");
 	fseek(annot, 0, SEEK_SET);
@@ -64,6 +39,68 @@ void readannotfile(char* path)
 	}
 
 	fclose(annot);
+}
+
+static void readTranslationFile(char* path)
+{
+	translationFile = fopen(path, "r");
+	fseek(translationFile, 0, SEEK_SET);
+
+	char tempFrom[3];
+	char tempTo[3];
+	int from;
+	int to;
+
+	for (int i = 0; i < 0xff; i++) model_translationTable[i] = i;
+
+	while (!feof(translationFile))
+	{
+		memset(tempFrom, 0, 3);
+		memset(tempTo, 0, 3);
+
+		if (fscanf(translationFile, "%c%c,%c%c ", &tempFrom[0], &tempFrom[1], &tempTo[0], &tempTo[1]) < 4)
+		{
+			break;
+		}
+
+		sscanf(tempFrom, "%x", &from);
+		sscanf(tempTo, "%x", &to);
+
+		model_translationTable[from] = to;
+	}
+
+	fclose(translationFile);
+}
+
+void file_setup(char* filepath, char* annotpath, char* translationPath)
+{
+	file = fopen(filepath, "r");
+	fseek(file, 0, SEEK_END);
+	file_size = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	readannotfile(annotpath);
+
+	if (translationPath)
+	{
+		readTranslationFile(translationPath);
+	}
+
+	file_readintomodelbuffer();
+}
+
+void file_readintomodelbuffer()
+{
+	fread(model_buffer, 1, MODEL_BUFFER_SIZE, file);
+}
+
+void file_setOffset(int offset)
+{
+	fseek(file, offset, SEEK_SET);
+}
+
+void file_moveoffset(int offset)
+{
+	fseek(file, offset, SEEK_CUR);
 }
 
 void writeannotfile(char* path)

@@ -4,9 +4,11 @@
 
 #define MODEL_BUFFER_SIZE 0x1000
 
+int model_displayMode; // standard or translationtable
 uint8_t* model_buffer;
 int model_bufferoffset; // byte
 int model_bufferSize; // size of current read in buffer (i.e. < MODEL_BUFFER_SIZE close to EOF)
+int model_translationTable[0xff];
 
 comment_t* comment_highlighted;
 int model_selectionstart;
