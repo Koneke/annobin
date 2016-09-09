@@ -1,2 +1,2 @@
-THIS IS THE IMPORTANT ONE NOW: file scrolling (fseek when we get too close to end of loaded stuff)
 find command? (both in hex and comments) (... regexes? :S)
+options menu
