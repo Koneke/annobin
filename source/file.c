@@ -57,7 +57,6 @@ static void readTranslationFile(char* path)
 		char c = fgetc(translationFile);
 		if (';' == c)
 		{
-			message_important("foo");
 			// just disregard the comment
 			fgets(dummyBuff, 512, translationFile);
 		}
