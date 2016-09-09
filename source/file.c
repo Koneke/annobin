@@ -54,9 +54,6 @@ static void readTranslationFile(char* path)
 
 	while (!feof(translationFile))
 	{
-		memset(tempFrom, 0, 3);
-		memset(tempTo, 0, 3);
-
 		char c = fgetc(translationFile);
 		if (';' == c)
 		{
