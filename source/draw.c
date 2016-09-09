@@ -176,8 +176,9 @@ static void drawcomments()
 				if (comment->index > lastcommentindex)
 				{
 					int commenty = max(commentlast, y);
+					int commentx = leftmarginWidth + 6 + 3 * view_bytesperline + view_bytesperline;
 
-					mvwprintw(stdscr, commenty, leftmarginWidth + 22 + 3 * view_bytesperline, "%s", comment->comment);
+					mvwprintw(stdscr, commenty, commentx, "%s", comment->comment);
 					lastcommentindex = comment->index;
 					commentlast = commenty + 1;
 				}
