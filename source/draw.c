@@ -191,7 +191,7 @@ static void drawStatusLine()
 	char format[10];
 	char statusLine[view_width];
 	sprintf(format, "%%-%is", view_width);
-	sprintf(statusLine, "Table mode %i", model_displayMode);
+	sprintf(statusLine, "Table mode %i | Bytes per line %i", model_displayMode, view_bytesperline);
 
 	attron(COLOR_PAIR(7));
 	mvwprintw(stdscr, view_height - 1, 0, format, statusLine);

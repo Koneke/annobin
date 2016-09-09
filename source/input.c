@@ -253,6 +253,9 @@ static void anyModeInput(int ch)
 		case 'n': gotoNextComment(); break;
 		case 'p': gotoPreviousComment(); break;
 
+		case '+': view_bytesperline++; break;
+		case '-': view_bytesperline--; break;
+
 		case 't': case 'T': model_displayMode = !model_displayMode; break;
 	}
 
