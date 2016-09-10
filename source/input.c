@@ -166,7 +166,7 @@ static void textinput(char c)
 
 void updateView()
 {
-	int magic = model_cursoroffset - model_bufferoffset; // buf rel cursor
+	int magic = (model_cursoroffset - model_bufferoffset) - view_byteOffset; // buf rel cursor
 	int cursorY = (magic - (magic % view_bytesperline)) / view_bytesperline; // find y buf rel
 	view_bytescroll = max(cursorY, view_height / 2) - view_height / 2;
 	view_bytescroll *= view_bytesperline;

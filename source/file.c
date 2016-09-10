@@ -57,7 +57,7 @@ static int readTranslationFile(char* path)
 	int from;
 	int to;
 
-	for (int i = 0; i < 0xff; i++) model_translationTable[i] = i;
+	for (int i = 0; i < 0xff; i++) model_translationTable[i] = 0;
 
 	while (!feof(translationFile))
 	{
