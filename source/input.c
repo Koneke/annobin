@@ -351,7 +351,7 @@ static void normalmodeinput(int ch)
 			break;
 
 		case 'Q':
-			app_running = 0;
+			if ('y' == getch()) app_running = 0;
 			break;
 	}
 }
