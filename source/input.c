@@ -256,6 +256,9 @@ static void anyModeInput(int ch)
 		case '+': view_bytesperline++; break;
 		case '-': view_bytesperline--; break;
 
+		case 'i': view_byteOffset++; break;
+		case 'u': view_byteOffset--; break;
+
 		case 't': case 'T': model_displayMode = !model_displayMode; break;
 	}
 

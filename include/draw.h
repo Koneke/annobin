@@ -4,6 +4,7 @@
 int view_width, view_height;
 int view_bytesperline;
 int view_bytescroll;
+int view_byteOffset;
 
 void draw_setup();
 void draw_postSetup();

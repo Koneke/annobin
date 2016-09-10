@@ -8,6 +8,7 @@
 
 static int leftmarginWidth;
 static char leftmarginFormat[20];
+static char leftmarginBlankFormat[20];
 
 static char getprintchar(char c)
 {
@@ -48,6 +49,7 @@ void draw_setup()
 
 	view_bytesperline = 16;
 	view_bytescroll = 0;
+	view_byteOffset = 0;
 }
 
 void draw_postSetup()
@@ -60,6 +62,7 @@ void draw_postSetup()
 	}
 
 	sprintf(leftmarginFormat, "%%0%ix", leftmarginWidth);
+	sprintf(leftmarginBlankFormat, "%%-%is", leftmarginWidth);
 }
 
 void draw_quit()
@@ -105,7 +108,7 @@ static void drawdata()
 
 	for (int y = 0; (!eof) && y < view_height - 1; y++)
 	{
-		offset = model_bufferoffset + view_bytescroll + y * view_bytesperline;
+		offset = model_bufferoffset + view_bytescroll + view_byteOffset + y * view_bytesperline;
 
 		if (offset >= file_size)
 		{
@@ -114,15 +117,23 @@ static void drawdata()
 		}
 
 		attron(COLOR_PAIR(1));
-		mvwprintw(stdscr, y, 0, leftmarginFormat, offset);
+		if (offset < 0)
+		{
+			mvwprintw(stdscr, y, 0, leftmarginBlankFormat, " ");
+		}
+		else
+		{
+			mvwprintw(stdscr, y, 0, leftmarginFormat, offset);
+		}
 		attroff(COLOR_PAIR(1));
 
 		for (int i = 0; i < view_bytesperline; i++)
 		{
 			// notice! not using model_bufferoffset!
 			// INTENTIONAL
-			offset = view_bytescroll + y * view_bytesperline + i;
-			if (offset + model_bufferoffset >= file_size)
+			offset = view_bytescroll + view_byteOffset + y * view_bytesperline + i;
+			if (offset < 0) continue;
+			else if (offset + model_bufferoffset >= file_size)
 			{
 				eof = 1;
 				break;
@@ -159,7 +170,8 @@ static void drawcomments()
 		for (int x = 0; x < view_bytesperline; x++)
 		{
 			// comment_at is buffer position independant!
-			offset = model_bufferoffset + view_bytescroll + y * view_bytesperline + x;
+			offset = model_bufferoffset + view_bytescroll + view_byteOffset + y * view_bytesperline + x;
+			if (offset < 0) continue;
 
 			comment_t* comment;
 			if (comment = comment_at(offset))
@@ -192,7 +204,12 @@ static void drawStatusLine()
 	char format[10];
 	char statusLine[view_width];
 	sprintf(format, "%%-%is", view_width);
-	sprintf(statusLine, "Table mode %i | Bytes per line %i", model_displayMode, view_bytesperline);
+	sprintf(
+		statusLine,
+		"Table mode %i | Bytes per line %i | Offset %i",
+		model_displayMode,
+		view_bytesperline,
+		view_byteOffset);
 
 	attron(COLOR_PAIR(7));
 	mvwprintw(stdscr, view_height - 1, 0, format, statusLine);
