@@ -13,7 +13,7 @@
 
 static int readannotfile(char* path)
 {
-	annot = fopen(path, "r");
+	FILE* annot = fopen(path, "r");
 
 	if (!annot) return 1;
 
@@ -48,7 +48,7 @@ static int readannotfile(char* path)
 
 static int readTranslationFile(char* path)
 {
-	translationFile = fopen(path, "r");
+	FILE* translationFile = fopen(path, "r");
 	if (!translationFile) return 1;
 
 	fseek(translationFile, 0, SEEK_SET);
@@ -107,7 +107,8 @@ static int die(char* path)
 int file_setup(char* filepath, char* annotpath, char* translationPath)
 {
 	if (readFile(filepath)) return die(filepath);
-	if (readannotfile(annotpath)) return die(annotpath);
+	file_annotationFilePath = annotpath;
+	readannotfile(annotpath);
 
 	if (translationPath)
 	{
@@ -135,7 +136,7 @@ void file_moveoffset(int offset)
 
 void writeannotfile(char* path)
 {
-	annot = fopen(path, "w+");
+	FILE* annot = fopen(path, "w+");
 
 	comment_t* current = comment_head;
 	int count = 1;

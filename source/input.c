@@ -346,7 +346,7 @@ static void normalmodeinput(int ch)
 		case 'w': case 'W':
 			if (getch() == 'Y')
 			{
-				writeannotfile("annot.testfile");
+				writeannotfile(file_annotationFilePath);
 			}
 			break;
 

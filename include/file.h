@@ -1,7 +1,6 @@
 FILE* file;
 int file_size;
-FILE* annot;
-FILE* translationFile;
+char* file_annotationFilePath;
 
 int file_setup(char* filepath, char* annotpath, char* translationPath);
 void file_quit();
