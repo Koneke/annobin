@@ -11,9 +11,12 @@
 #include "file.h"
 #include "model.h"
 
-static void readannotfile(char* path)
+static int readannotfile(char* path)
 {
 	annot = fopen(path, "r");
+
+	if (!annot) return 1;
+
 	fseek(annot, 0, SEEK_SET);
 
 	uint64_t position, length;
@@ -39,11 +42,15 @@ static void readannotfile(char* path)
 	}
 
 	fclose(annot);
+
+	return 0;
 }
 
-static void readTranslationFile(char* path)
+static int readTranslationFile(char* path)
 {
 	translationFile = fopen(path, "r");
+	if (!translationFile) return 1;
+
 	fseek(translationFile, 0, SEEK_SET);
 
 	char dummyBuff[512];
@@ -75,22 +82,40 @@ static void readTranslationFile(char* path)
 	}
 
 	fclose(translationFile);
+
+	return 0;
 }
 
-void file_setup(char* filepath, char* annotpath, char* translationPath)
+static int readFile(char* path)
 {
-	file = fopen(filepath, "r");
+	file = fopen(path, "r");
+	if (!file) return 1;
+
 	fseek(file, 0, SEEK_END);
 	file_size = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	readannotfile(annotpath);
+
+	return 0;
+}
+
+static int die(char* path)
+{
+	message_important("Couldn't find file \"%s\".", path);
+	return 1;
+}
+
+int file_setup(char* filepath, char* annotpath, char* translationPath)
+{
+	if (readFile(filepath)) return die(filepath);
+	if (readannotfile(annotpath)) return die(annotpath);
 
 	if (translationPath)
 	{
-		readTranslationFile(translationPath);
+		if (readTranslationFile(translationPath)) return die(translationPath);
 	}
 
 	file_readintomodelbuffer();
+	return 0;
 }
 
 void file_readintomodelbuffer()

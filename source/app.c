@@ -6,21 +6,14 @@
 #include "input.h"
 #include "app.h"
 
-void app_setup(int argc, char** argv)
+int app_setup(int argc, char** argv)
 {
 	// make sure to setup model before file,
 	// since file expects there to be a buffer already.
 	model_setup();
 	draw_setup();
 
-	if (argc == 3)
-	{
-		file_setup(argv[1], argv[2], NULL);
-	}
-	else if (argc == 4)
-	{
-		file_setup(argv[1], argv[2], argv[3]);
-	}
+	if (file_setup(argv[1], argv[2], argc == 4 ? argv[3] : NULL)) return 1;
 
 	draw_postSetup();
 	input_setup();

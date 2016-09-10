@@ -10,9 +10,11 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	app_setup(argc, argv);
-	app_run();
-	app_quit();
+	if (app_setup(argc, argv))
+	{
+		app_run();
+		app_quit();
+	}
 
 	return 0;
 }

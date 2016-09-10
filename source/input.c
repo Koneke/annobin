@@ -72,6 +72,7 @@ static void finishcomment_cb(char* comment)
 		model_selection_firstOffset(),
 		model_selection_length(),
 		comment);
+	setstate(inputstate_normal);
 }
 
 static void findHex(char* string)
@@ -94,6 +95,8 @@ static void find_cb(char* string)
 		case 'c': findChar(string); break;
 		case 't': findTranslated(string); break;
 	}
+
+	setstate(inputstate_normal);
 }
 
 static void findMode_cb(char* mode)
@@ -150,7 +153,6 @@ static void textinput(char c)
 
 	if (c == KEY_ENTER || c == '\n' || c == '\r')
 	{
-		setstate(inputstate_normal);
 		(textcallback)(input_clonebuffer());
 		resetbuffer();
 	}
@@ -223,6 +225,7 @@ static void goto_cb(char* address)
 	sscanf(address, "%x", &offset);
 	model_cursoroffset = offset;
 	checkModelBufferRange();
+	setstate(inputstate_normal);
 }
 
 static void selectmodeinput(int ch)
