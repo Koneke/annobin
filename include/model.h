@@ -15,6 +15,7 @@ int model_selectionstart;
 int model_selectionend;
 int model_selectionlength;
 int model_cursoroffset;
+
 int model_selection_firstOffset();
 int model_selection_lastOffset();
 int model_selection_length();

@@ -12,6 +12,8 @@
 
 #define BUFFER_SIZE 100
 
+static char prompt[50];
+
 typedef enum e_inputstate_e {
 	inputstate_normal = 0,
 	inputstate_select = 1,
@@ -34,26 +36,12 @@ static textinput_callback textcallback;
 static int inputmask;
 static char inputbuffer[100];
 static int inputindex;
+static char findMode;
 
 static void resetbuffer()
 {
 	memset(inputbuffer, 0, BUFFER_SIZE);
 	inputindex = 0;
-}
-
-static void finishcomment_cb(char* comment)
-{
-	comment_addcomment(
-		model_selection_firstOffset(),
-		model_selection_length(),
-		comment);
-}
-
-static char* input_clonebuffer()
-{
-	char* clone = malloc(inputindex);
-	strcpy(clone, inputbuffer);
-	return clone;
 }
 
 static int setstate(e_inputstate _state)
@@ -69,21 +57,78 @@ static int setstate(e_inputstate _state)
 	return inputstate = _state;
 }
 
+void input_starttextinput(const char* inputPrompt, textinput_callback callback, int mask)
+{
+	textcallback = callback;
+	inputmask = mask;
+	strcpy(prompt, inputPrompt);
+	setstate(inputstate_text);
+	refresh();
+}
+
+static void finishcomment_cb(char* comment)
+{
+	comment_addcomment(
+		model_selection_firstOffset(),
+		model_selection_length(),
+		comment);
+}
+
+static void findHex(char* string)
+{
+}
+
+static void findChar(char* string)
+{
+}
+
+static void findTranslated(char* string)
+{
+}
+
+static void find_cb(char* string)
+{
+	switch (findMode)
+	{
+		case 'h': findHex(string); break;
+		case 'c': findChar(string); break;
+		case 't': findTranslated(string); break;
+	}
+}
+
+static void findMode_cb(char* mode)
+{
+	findMode = 0;
+
+	switch (mode[0])
+	{
+		case 'h': case 'H': findMode = 'h'; break;
+		case 'c': case 'C': findMode = 'c'; break;
+		case 't': case 'T': findMode = 't'; break;
+	}
+
+	if (findMode)
+	{
+		char p[] = "Find (#) (prepend ? for upwards)";
+		p[6] = findMode;
+		input_starttextinput(p, find_cb, inputmask_none);
+	}
+}
+
+static char* input_clonebuffer()
+{
+	char* clone = malloc(inputindex);
+	strcpy(clone, inputbuffer);
+	return clone;
+}
+
 void input_setup()
 {
 	setstate(inputstate_normal);
 	resetbuffer();
 }
 
-void input_starttextinput(textinput_callback callback, int mask)
-{
-	textcallback = callback;
-	inputmask = mask;
-	setstate(inputstate_text);
-	refresh();
-}
-
-static int textinput(char c)
+static void textinput(char c)
 {
 	if (c == 127 || c == 8)
 	{
@@ -105,15 +150,15 @@ static int textinput(char c)
 
 	if (c == KEY_ENTER || c == '\n' || c == '\r')
 	{
+		setstate(inputstate_normal);
 		(textcallback)(input_clonebuffer());
 		resetbuffer();
-		return setstate(inputstate_normal);
 	}
 
 	if (c == 27)
 	{
 		resetbuffer();
-		return setstate(inputstate_normal);
+		setstate(inputstate_normal);
 	}
 }
 
@@ -190,7 +235,7 @@ static void selectmodeinput(int ch)
 		case 'c': case 'C':
 			if (!model_selection_isOverlappingComments())
 			{
-				input_starttextinput(finishcomment_cb, inputmask_none);
+				input_starttextinput("Comment", finishcomment_cb, inputmask_none);
 			}
 			break;
 
@@ -280,7 +325,11 @@ static void normalmodeinput(int ch)
 			break;
 
 		case 'g': case 'G':
-			input_starttextinput(goto_cb, inputmask_hex);
+			input_starttextinput("Goto address", goto_cb, inputmask_hex);
+			break;
+
+		case 'f': case 'F':
+			input_starttextinput("Find [h]ex, [c]har table, [t]ranslated", findMode_cb, inputmask_letters);
 			break;
 
 		case 'c': case 'C':
@@ -298,7 +347,6 @@ static void normalmodeinput(int ch)
 			}
 			break;
 
-		case 'q':
 		case 'Q':
 			app_running = 0;
 			break;
@@ -312,14 +360,24 @@ static void selectmodedraw()
 static void textmodedraw()
 {
 	attron(COLOR_PAIR(3));
-	mvwprintw(stdscr, view_height / 2, 0, "Comment: %s", inputbuffer);
+
+	for (int i = 0; i < 3; i++)
+	{
+		mvwprintw(stdscr, view_height / 2 - 1 + i, 10, "%*s", view_width - 20, "");
+	}
+
+	mvwprintw(stdscr, view_height / 2, 11, "%s: %s", prompt, inputbuffer);
 	attroff(COLOR_PAIR(3));
 }
 
 void input_update()
 {
 	char ch = getch();
-	anyModeInput(ch);
+
+	if (inputstate != inputstate_text)
+	{
+		anyModeInput(ch);
+	}
 
 	switch (inputstate)
 	{
