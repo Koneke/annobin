@@ -2,7 +2,7 @@
 #include "comment.h"
 #include "file.h"
 
-#define MODEL_BUFFER_SIZE 0x1000
+#define MODEL_BUFFER_SIZE 0x4000
 
 int model_displayMode; // standard or translationtable
 uint8_t* model_buffer;

@@ -177,23 +177,29 @@ static int checkModelBufferRange()
 	int lastOffset = model_bufferoffset;
 	int linejump = 0x40;
 	int margin = view_bytesperline * linejump;
+	margin = MODEL_BUFFER_SIZE / 8;
 
 	int moved = 0;
 
-	while (model_cursoroffset - model_bufferoffset > MODEL_BUFFER_SIZE - margin)
+	if (model_cursoroffset - model_bufferoffset > MODEL_BUFFER_SIZE - margin)
 	{
-		model_bufferoffset += margin * 2;
-		moved = 1;
-	}
-
-	while (model_bufferoffset > 0 && (model_cursoroffset - model_bufferoffset) < margin)
-	{
-		model_bufferoffset -= margin * 2;
-		model_bufferoffset = max(model_bufferoffset, 0);
-
-		if (model_bufferoffset != lastOffset)
+		while (model_cursoroffset - model_bufferoffset > MODEL_BUFFER_SIZE - margin)
 		{
+			model_bufferoffset += margin * 3;
 			moved = 1;
+		}
+	}
+	else
+	{
+		while (model_bufferoffset > 0 && (model_cursoroffset - model_bufferoffset) < margin)
+		{
+			model_bufferoffset -= margin * 3;
+			model_bufferoffset = max(model_bufferoffset, 0);
+
+			if (model_bufferoffset != lastOffset)
+			{
+				moved = 1;
+			}
 		}
 	}
 
