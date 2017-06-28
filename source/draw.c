@@ -18,27 +18,6 @@ static char getprintchar(char c)
 	}
 
 	return c;
-
-
-
-	if (
-		(c >= 'A' && c <= 'Z') || 
-		(c >= 'a' && c <= 'z') ||
-		(c >= '0' && c <= '9')
-	) {
-		return c;
-	}
-
-	return '_';
-
-	switch(c)
-	{
-		case 0:
-		case 0x0d: // cr
-			return ' ';
-	}
-
-	return c;
 }
 
 void draw_setup()
