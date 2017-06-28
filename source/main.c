@@ -12,6 +12,8 @@ int main(int argc, char** argv)
 
 	printf("%s : %s\n", k, TableGet(t, k));
 
+	TableDestroy(t);
+
 	return 0;*/
 
 	if (argc < 3 || argc > 4)

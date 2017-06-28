@@ -43,6 +43,33 @@ HashTable_t* TableCreate()
 
 void TableDestroy(HashTable_t* table)
 {
+	HashTableIndex_t i = Head;
+
+	while (i->Next && i->Table != table)
+	{
+		i = i->Next;
+	}
+
+	if (i->Table == table)
+	{
+		if (i->Prev) i->Prev->Next = i->Next;
+		if (i->Next) i->Next->Prev = i->Prev;
+
+		for (unsigned j = 0; j < HASHSIZE; j++)
+		{
+			if (i->Table->Elements[j])
+			{
+				free(i->Table->Elements[j]);
+			}
+		}
+
+		free(i->Table);
+		free(i);
+	}
+	else // couldn't find it in the index?? help
+	{
+		printf("Couldn't find hashtable in the index.\n");
+	}
 }
 
 static unsigned hash(char* data)
