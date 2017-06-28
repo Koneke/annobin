@@ -1,3 +1,5 @@
+#pragma once
+
 typedef struct HashTable_s HashTable_t;
 
 HashTable_t* TableCreate();

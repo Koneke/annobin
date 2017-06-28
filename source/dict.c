@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "dict.h"
+#include "ll.h"
 
 #define HASHSIZE 1000
 
@@ -10,65 +12,33 @@ struct HashTable_s {
 	char* Elements[HASHSIZE];
 };
 
-typedef struct HashTableIndex_s {
-	struct HashTableIndex_s* Next;
-	struct HashTableIndex_s* Prev;
-	HashTable_t* Table;
-} HashTableIndex_t;
-
-static HashTableIndex_t* Head;
-static HashTableIndex_t* Tail;
+static ll_t tables;
 
 HashTable_t* TableCreate()
 {
-	HashTableIndex_t* temp = malloc(sizeof(HashTableIndex_t));
-	temp->Table = malloc(sizeof(HashTable_t));
-	memset(temp->Table->Elements, 0, sizeof(temp->Table->Elements));
-	temp->Prev = Tail;
+	HashTable_t* t = malloc(sizeof(HashTable_t));
+	llAdd(&tables, t);
 
-	if (Tail)
-	{
-		Tail->Next = temp;
-	}
-
-	Tail = temp;
-
-	if (!Head)
-	{
-		Head = Tail;
-	}
-
-	return temp->Table;
+	return t;
 }
 
 void TableDestroy(HashTable_t* table)
 {
-	HashTableIndex_t i = Head;
+	unsigned idx = llFind(&tables, table);
 
-	while (i->Next && i->Table != table)
+	if (idx > 0)
 	{
-		i = i->Next;
-	}
-
-	if (i->Table == table)
-	{
-		if (i->Prev) i->Prev->Next = i->Next;
-		if (i->Next) i->Next->Prev = i->Prev;
+		HashTable_t* t = llGet(&tables, idx);
 
 		for (unsigned j = 0; j < HASHSIZE; j++)
 		{
-			if (i->Table->Elements[j])
+			if (t->Elements[j])
 			{
-				free(i->Table->Elements[j]);
+				free(t->Elements[j]);
 			}
 		}
 
-		free(i->Table);
-		free(i);
-	}
-	else // couldn't find it in the index?? help
-	{
-		printf("Couldn't find hashtable in the index.\n");
+		llRemove(&tables, idx);
 	}
 }
 
