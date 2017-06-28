@@ -12,6 +12,15 @@ static char leftmarginBlankFormat[20];
 
 static char getprintchar(char c)
 {
+	if (c < 32) // control chars
+	{
+		return '_';
+	}
+
+	return c;
+
+
+
 	if (
 		(c >= 'A' && c <= 'Z') || 
 		(c >= 'a' && c <= 'z') ||
@@ -106,7 +115,14 @@ static void drawdata()
 	int commentswritten = -1;
 	int eof = 0;
 
-	for (int y = 0; (!eof) && y < view_height - 1; y++)
+	// draw header
+	for (int i = 0; i < view_bytesperline; i++)
+	{
+		mvwprintw(stdscr, 0, leftmarginWidth + 2 + i * 3, "%02x", i);
+	}
+
+	// draw data
+	for (int y = 0; (!eof) && y < view_height - 2; y++)
 	{
 		offset = model_bufferoffset + view_bytescroll + view_byteOffset + y * view_bytesperline;
 
@@ -119,11 +135,11 @@ static void drawdata()
 		attron(COLOR_PAIR(1));
 		if (offset < 0)
 		{
-			mvwprintw(stdscr, y, 0, leftmarginBlankFormat, " ");
+			mvwprintw(stdscr, y + 1, 0, leftmarginBlankFormat, " ");
 		}
 		else
 		{
-			mvwprintw(stdscr, y, 0, leftmarginFormat, offset);
+			mvwprintw(stdscr, y + 1, 0, leftmarginFormat, offset);
 		}
 		attroff(COLOR_PAIR(1));
 
@@ -140,17 +156,17 @@ static void drawdata()
 			}
 
 			setcolor(model_bufferoffset + offset);
-			mvwprintw(stdscr, y, leftmarginWidth + 2 + i * 3, "%02x ", model_buffer[offset]);
+			mvwprintw(stdscr, y + 1, leftmarginWidth + 2 + i * 3, "%02x ", model_buffer[offset]);
 
 			int charTableX = leftmarginWidth + 4 + i + 3 * view_bytesperline;
 
 			if (model_displayMode == 0)
 			{
-				mvwprintw(stdscr, y, charTableX, "%c", getprintchar(model_buffer[offset]));
+				mvwprintw(stdscr, y + 1, charTableX, "%c", getprintchar(model_buffer[offset]));
 			}
 			else if (model_displayMode == 1)
 			{
-				mvwprintw(stdscr, y, charTableX, "%c", getprintchar(model_translationTable[model_buffer[offset]]));
+				mvwprintw(stdscr, y + 1, charTableX, "%c", getprintchar(model_translationTable[model_buffer[offset]]));
 			}
 
 			attroff(COLOR_PAIR(1));
@@ -165,7 +181,7 @@ static void drawcomments()
 	int commentlast = -1; // line (so we don't overlap comments)
 	int lastcommentindex = -1;
 
-	for (int y = 0; y < view_height; y++)
+	for (int y = 0; y < view_height - 2; y++)
 	{
 		for (int x = 0; x < view_bytesperline; x++)
 		{
@@ -190,7 +206,7 @@ static void drawcomments()
 					int commenty = max(commentlast, y);
 					int commentx = leftmarginWidth + 6 + 3 * view_bytesperline + view_bytesperline;
 
-					mvwprintw(stdscr, commenty, commentx, "%s", comment->comment);
+					mvwprintw(stdscr, commenty + 1, commentx, "%s", comment->comment);
 					lastcommentindex = comment->index;
 					commentlast = commenty + 1;
 				}
@@ -206,7 +222,8 @@ static void drawStatusLine()
 	sprintf(format, "%%-%is", view_width);
 	sprintf(
 		statusLine,
-		"Table mode %i | Bytes per line %i | Offset %i",
+		"Cursor %x | Table mode %i | Bytes per line %i | Offset %i",
+		model_cursoroffset,
 		model_displayMode,
 		view_bytesperline,
 		view_byteOffset);

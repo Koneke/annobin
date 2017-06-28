@@ -20,7 +20,7 @@ int isHex(char c)
 
 int isPunctuation(char c)
 {
-	return c == ',' || c == '.';
+	return c == ',' || c == '.' || c == '+' || c == '-';
 }
 
 int isWhitespace(char c)

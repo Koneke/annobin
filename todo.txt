@@ -2,3 +2,8 @@ find command? (both in hex and comments) (... regexes? :S)
 help menu
 bookmarks
 single-char prompts (quit, save, findmode)
+goto end beginning of comment (vim e/b)
+
+; oh boy, it's been a while since I worked on this haha
+better save/quit lmao (that's single-char prompts I guess?)
+show comment length somehow (to quickly check if your comments match with a spec)

@@ -1,0 +1,27 @@
+; sample idea macro?
+; for quickly marking up png files
+
+check . x89'504e47'0d0a1a0a ; x marks hex, apostrophes are delimiters
+move +8
+
+routine chunk-start
+	let $stop 0
+flag loop
+	read $length 4
+	read $type 4
+
+	if/eq $type "IEND"
+		let $stop 1
+	fi
+
+	call set-comment -8 -4 {"%s length: %d" $type $length}
+	call set-comment -4 . {"%s sign" $type}
+	call set-comment . +$length {"%s data" $type}
+	move +$length
+	read $crc 4
+	call set-comment -4 . {"%s crc: %x" $type $crc}
+
+	jeq $stop 0 loop
+
+	return
+end-routine

@@ -120,7 +120,7 @@ static void findMode_cb(char* mode)
 
 static char* input_clonebuffer()
 {
-	char* clone = malloc(inputindex);
+	char* clone = malloc(inputindex + 10);
 	strcpy(clone, inputbuffer);
 	return clone;
 }
@@ -135,8 +135,9 @@ static void textinput(char c)
 {
 	if (c == 127 || c == 8)
 	{
-		inputbuffer[--inputindex] = '\0';
+		inputindex--;
 		inputindex = clamp(inputindex, 0, BUFFER_SIZE - 1);
+		inputbuffer[inputindex] = '\0';
 	}
 	else if (
 		!inputmask ||
